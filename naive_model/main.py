@@ -22,12 +22,12 @@ def recovery_percentage_coupling_rate(coupling_rates, strand_length, repeats, si
 
 if __name__ == '__main__':
 
-    strand_length = 200
-    repeats = 5000
-    simulations = 20
+    strand_length = 300
+    repeats = 1000
+    simulations = 10
 
     # Assuming recovery percentages for different coupling rates are already calculated
-    coupling_rates = [0.7, 0.8, 0.9, 0.95, 0.99]
+    coupling_rates = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99]
 
     recovery_percentages_no_capping = recovery_percentage_coupling_rate(coupling_rates=coupling_rates, strand_length=strand_length, repeats=repeats, simulations=simulations, capping=False)
 

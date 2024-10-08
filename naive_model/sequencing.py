@@ -1,5 +1,6 @@
 
 import numpy as np
+from seq_stat import align
 
 bases = ['A', 'T', 'C', 'G']
 
@@ -64,17 +65,23 @@ class NaiveSequencingModel:
                     T_votes[i] += 1
                 elif j[i] == 'C':
                     C_votes[i] += 1
-                else:
+                elif j[i] == 'G':
                     G_votes[i] += 1
+                else: # In case there is a blank post alignment
+                    continue
 
         return A_votes, T_votes, C_votes, G_votes
 
-    def consensus_decoding(self, sequenced_strands):
+    def consensus_decoding(self, sequenced_strands, original_strand, alignment=False):
         """
         Sequenced copies of the same strand, using majority voting to decode
         """
         
-        A_votes, T_votes, C_votes, G_votes = self.get_votes_per_position(
+        if alignment:
+            sequenced_strands = [align(original_strand, sequenced_strand) if len(sequenced_strand)>0 else ""*len(original_strand) for sequenced_strand in 
+                           sequenced_strands]
+
+        A_votes, T_votes, C_votes, G_votes = self.get_base_votes(
             sequenced_strands)
         
         consensus_strand = ""
@@ -82,8 +89,8 @@ class NaiveSequencingModel:
         for i in range(self.strand_length):
             votes = [A_votes[i], T_votes[i], C_votes[i], G_votes[i]]
             consensus_strand += bases[np.argmax(votes)]
-
         return consensus_strand
+
 
     def get_base_likelihoods(self, A_votes, T_votes, C_votes, G_votes):
         """Given the votes per position of the strand, get the symbol likelihood array"""
