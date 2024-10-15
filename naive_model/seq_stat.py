@@ -7,7 +7,6 @@ import argparse  # Command-line argument parsing
 from Bio import SeqIO  # Sequence I/O
 from Bio import Align  # Sequence alignment
 import numpy as np  # Numerical operations
-import pandas as pd  # Data manipulation
 from sklearn.cluster import KMeans  # Clustering algorithm
 from sklearn.decomposition import PCA  # Dimensionality reduction
 from sklearn.feature_extraction.text import CountVectorizer  # Text to count matrix
@@ -41,28 +40,24 @@ def cluster_seq(sequences, fname):
     """
     # Create a list of k-mer strings for all sequences
     kmer_list = [' '.join(get_kmers(seq)) for seq in sequences]
-    
+
     # Use CountVectorizer to convert k-mer strings to frequency vectors
     vectorizer = CountVectorizer()
     features = vectorizer.fit_transform(kmer_list).toarray()
-    
     # Apply K-means clustering
     num_clusters = 3  # Adjust based on your data
     kmeans = KMeans(n_clusters=num_clusters, random_state=42)
     labels = kmeans.fit_predict(features)
-    
     # Dimensionality reduction using PCA
     pca = PCA(n_components=2)
     X = pca.fit_transform(features)
-    
     # Plot the clusters
     plt.figure(figsize=(10, 6))
     # Plot each cluster with a different color
     for cluster in range(num_clusters):
         cluster_points = X[labels == cluster]
         plt.scatter(cluster_points[:, 0], cluster_points[:, 1], label=f'Cluster {cluster}', alpha=0.8)
-    plt.title(f'Clusters in {fname} Data')
-    
+    plt.title(f'Clusters in {fname} Data')    
     # Highlight the synthesized sequence
     synthesized_features = vectorizer.transform([synthesized_kmer_string]).toarray()
     # Find the closest point to the synthesized sequence
@@ -71,7 +66,7 @@ def cluster_seq(sequences, fname):
     plt.scatter(X[synthesized_index, 0], X[synthesized_index, 1], color='red', marker='*', s=300)
     plt.legend()
     plt.savefig(f'{output_dir}/{fname}.png', dpi=300, bbox_inches='tight')
-    #plt.show()
+
 
 def aligned_strand(indices, seqA, seqB):
     """

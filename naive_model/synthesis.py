@@ -1,7 +1,9 @@
 
 import numpy as np
+from uuid import uuid4
 
 bases = ['A', 'T', 'C', 'G']
+
 
 class NaiveSynthesisModel:
     """
@@ -11,12 +13,13 @@ class NaiveSynthesisModel:
     """
 
     def __init__(self, coupling_rate, strand_length, repeats,
-                  capping=True):
+                 capping=True, write_file=False):
         self.coupling_rate = coupling_rate
         self.strand_length = strand_length
         self.repeats = repeats
         self.strand = "".join(np.random.choice(bases, strand_length))
         self.capping = capping
+        self.write_file = write_file
 
     def simulate_synthesis(self):
 
@@ -31,5 +34,11 @@ class NaiveSynthesisModel:
                         break
                     continue
             self.synthesized_strands.append(synthesizing_strand)
+
+        if self.write_file:
+            with open('synthesized_strands.txt', 'w') as f:
+                for strand in self.synthesized_strands:
+                    f.write(f">strand a id {uuid4().hex}\n")
+                    f.write(strand + '\n\n')
 
         return self.synthesized_strands
