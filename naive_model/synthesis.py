@@ -20,8 +20,9 @@ class NaiveSynthesisModel:
         self.strand = "".join(np.random.choice(bases, strand_length))
         self.capping = capping
         self.write_file = write_file
+        self.strand_id = uuid4()
 
-    def simulate_synthesis(self):
+    def simulate_synthesis(self, filepath=None):
 
         self.synthesized_strands = []
         for i in range(self.repeats):
@@ -35,10 +36,11 @@ class NaiveSynthesisModel:
                     continue
             self.synthesized_strands.append(synthesizing_strand)
 
+        filepath = f"{self.strand_id}_{filepath}"
         if self.write_file:
-            with open('synthesized_strands.txt', 'w') as f:
+            with open(filepath, 'w') as f:
                 for strand in self.synthesized_strands:
-                    f.write(f">strand a id {uuid4().hex}\n")
+                    f.write(f">strand_{self.strand_id}_{uuid4()}\n")
                     f.write(strand + '\n\n')
 
         return self.synthesized_strands

@@ -75,7 +75,6 @@ if __name__ == '__main__':
     # Run the Badread and read from file
     sequenced_strands = model.read_sequenced_strands_from_file('synthesized_strands.txt')
 
-    
     # Run the consensus decoding
     consensus_strand = model.sequencing_model.consensus_decoding(sequenced_strands, model.strand, alignment=True)
 
