@@ -36,11 +36,10 @@ class NaiveSynthesisModel:
                     continue
             self.synthesized_strands.append(synthesizing_strand)
 
-        filepath = f"{self.strand_id}_{filepath}"
         if self.write_file:
-            with open(filepath, 'w') as f:
+            with open(filepath, 'a') as f:
                 for strand in self.synthesized_strands:
-                    f.write(f">strand_{self.strand_id}_{uuid4()}\n")
+                    f.write(f">{self.strand_id}\n")
                     f.write(strand + '\n\n')
 
         return self.synthesized_strands
