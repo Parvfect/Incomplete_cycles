@@ -40,6 +40,12 @@ def get_reference_from_file(file_path):
     return strand_id[1:]
 
 
+def get_recovery_percentage(consensus_strand, original_strand):
+
+    return sum([
+                1 for i in range(len(consensus_strand))
+                if consensus_strand[i] == original_strand[i]]
+                ) / len(consensus_strand)
 
 
 def create_low_quality_model(filename):
@@ -74,6 +80,3 @@ def create_low_quality_model(filename):
     # Write to the file
     with open(filename, 'w') as f:
         f.write('\n'.join(output_lines))
-
-# Usage
-create_low_quality_model('model_qc_clr.txt')

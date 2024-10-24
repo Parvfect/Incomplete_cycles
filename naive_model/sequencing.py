@@ -101,7 +101,7 @@ class NaiveSequencingModel:
                 for sequenced_strand in sequenced_strands]
 
         A_votes, T_votes, C_votes, G_votes = self.get_base_votes(
-            sequenced_strands)``
+            sequenced_strands)
 
         consensus_strand = ""
         bases = ['A', 'T', 'C', 'G']

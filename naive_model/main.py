@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from utils import get_recovery_percentage
 
 from dna_storage import NaiveDNAStorageModel
 
@@ -14,10 +15,7 @@ def recovery_percentage_coupling_rate(
         for i in tqdm(range(simulations)):
             model = NaiveDNAStorageModel(coupling_rate, strand_length, repeats, capping=capping)
             consensus_strand = model.simulate_storage()
-            recovery_percentage = sum([
-                1 for i in range(len(consensus_strand))
-                if consensus_strand[i] == model.strand[i]]
-                ) / len(consensus_strand)
+            recovery_percentage = get_recovery_percentage(consensus_strand, model.strand)
             local_recovery_percentages.append(recovery_percentage)
 
         recovery_percentages.append(np.mean(local_recovery_percentages))
