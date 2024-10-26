@@ -1,12 +1,11 @@
 
 from synthesis import NaiveSynthesisModel
 
-coupling_rates = [8, 8.5, 9, 9.5, 9.99]
-#coupling_rates = [9.5]
+coupling_rates = [8, 8.25, 8.5, 8.75, 9, 9.25, 9.5, 9.75, 9.99]
 
 synthesis_models = []
 
-repeats = 5
+repeats = 100
 strand_repeats = 1
 strand_length = 200
 
