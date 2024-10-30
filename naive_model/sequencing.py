@@ -1,6 +1,14 @@
 
 import numpy as np
-from seq_stat import align
+from seq_stat import align, cluster_seq
+from sklearn.cluster import KMeans  # Clustering algorithm
+from sklearn.decomposition import PCA  # Dimensionality reduction
+from sklearn.feature_extraction.text import CountVectorizer  # Text to count matrix
+from sklearn.metrics.pairwise import euclidean_distances  # Distance calculation
+import matplotlib.pyplot as plt  # Plotting library
+from collections import Counter
+from scipy.spatial.distance import hamming
+
 
 bases = ['A', 'T', 'C', 'G']
 
@@ -11,8 +19,8 @@ class NaiveSequencingModel:
     Independent base IDS errors
     """
 
-    def __init__(self, insertion_probability=0.015,
-                 deletion_probability=0.055, subsitution_probability=0.075,
+    def __init__(self, insertion_probability=0.05,
+                 deletion_probability=0.04, subsitution_probability=0.02,
                  strand_length=20):
         self.insertion_probability = insertion_probability
         self.deletion_probability = deletion_probability
@@ -108,7 +116,10 @@ class NaiveSequencingModel:
         for i in range(self.strand_length):
             votes = [A_votes[i], T_votes[i], C_votes[i], G_votes[i]]
             consensus_strand += bases[np.argmax(votes)]
-        return consensus_strand
+
+        return sum([
+        i==j for i, j in zip(original_strand, consensus_strand)
+        ])/len(original_strand)
 
     def get_base_likelihoods(self, A_votes, T_votes, C_votes, G_votes):
         """Given the votes per position of the strand, get the symbol
@@ -122,3 +133,76 @@ class NaiveSequencingModel:
             likelihoods.append(votes/np.sum(votes))
 
         return likelihoods
+
+
+def get_base_votes(strand_length, sequenced_strands):
+        """Get the votes per position of the strand"""
+
+        A_votes = np.zeros(strand_length)
+        T_votes = np.zeros(strand_length)
+        C_votes = np.zeros(strand_length)
+        G_votes = np.zeros(strand_length)
+
+        for i in range(strand_length):
+            for j in sequenced_strands:
+                if i >= len(j):
+                    break
+                if j[i] == 'A':
+                    A_votes[i] += 1
+                elif j[i] == 'T':
+                    T_votes[i] += 1
+                elif j[i] == 'C':
+                    C_votes[i] += 1
+                elif j[i] == 'G':
+                    G_votes[i] += 1
+                else:   # In case there is a blank post alignment
+                    continue
+
+        return A_votes, T_votes, C_votes, G_votes
+
+def get_longest_strand(strands, reference):
+
+    longest_strand = ""
+    for strand in strands:
+        if len(strand) > len(longest_strand) and len(strand) <= len(reference):
+            longest_strand = strand
+
+    return longest_strand
+
+
+def aligned_consensus(sequenced_strands, reference):
+
+    # Create a list of k-mer strings for all sequences
+    kmer_list = [' '.join(get_kmers(seq)) for seq in sequences]
+
+    # Use CountVectorizer to convert k-mer strings to frequency vectors
+    vectorizer = CountVectorizer()
+    features = vectorizer.fit_transform(kmer_list).toarray()
+    
+    # Apply K-means clustering
+    num_clusters = n_clusters  # Adjust based on your data
+    kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+    labels = kmeans.fit_predict(features)
+
+    longest_strand = get_longest_strand(sequenced_strands, reference)
+    strand_length = len(reference)
+
+    sequenced_strands = [
+                    align(sequenced_strand, longest_strand)
+                    if len(sequenced_strand) > 20
+                    else "" * strand_length
+                    for sequenced_strand in sequenced_strands]
+    
+    A_votes, T_votes, C_votes, G_votes = get_base_votes(
+            strand_length,
+            sequenced_strands)
+
+    consensus_strand = ""
+    bases = ['A', 'T', 'C', 'G']
+    for i in range(strand_length):
+        votes = [A_votes[i], T_votes[i], C_votes[i], G_votes[i]]
+        consensus_strand += bases[np.argmax(votes)]
+
+    return sum([
+    i==j for i, j in zip(reference, consensus_strand)
+    ])/len(reference)

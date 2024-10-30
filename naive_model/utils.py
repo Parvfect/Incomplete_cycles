@@ -80,3 +80,5 @@ def create_low_quality_model(filename):
     # Write to the file
     with open(filename, 'w') as f:
         f.write('\n'.join(output_lines))
+
+

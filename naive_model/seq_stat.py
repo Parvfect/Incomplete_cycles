@@ -12,6 +12,97 @@ from sklearn.decomposition import PCA  # Dimensionality reduction
 from sklearn.feature_extraction.text import CountVectorizer  # Text to count matrix
 from sklearn.metrics.pairwise import euclidean_distances  # Distance calculation
 import matplotlib.pyplot as plt  # Plotting library
+from collections import Counter
+from scipy.spatial.distance import hamming
+
+
+def evaluate_consensus_quality(sequences, consensus):
+    """
+    Evaluate the quality of a consensus sequence based on average Hamming distance to cluster members.
+
+    Args:
+        sequences (list of str): List of sequences in a cluster.
+        consensus (str): Consensus sequence for the cluster.
+
+    Returns:
+        float: Average Hamming distance between consensus and sequences.
+    """
+
+    min_length = min(min(len(sequences)), len(consensus))
+    
+    total_distance = hamming(list(sequences[:min_length]), list(consensus[:min_length]))
+    return total_distance / len(sequences)
+
+def select_best_consensus(consensus_sequences, sequences, labels):
+    """
+    Select the best consensus sequence from clusters.
+
+    Args:
+        consensus_sequences (dict): Consensus sequences for each cluster.
+        sequences (list of str): List of all sequences.
+        labels (list of int): Cluster labels for each sequence.
+
+    Returns:
+        str: The best consensus sequence.
+    """
+    best_consensus = None
+    best_score = float('inf')
+    
+    for label, consensus in consensus_sequences.items():
+        cluster_sequences = [seq for seq, lbl in zip(sequences, labels) if lbl == label]
+        score = evaluate_consensus_quality(cluster_sequences, consensus)
+        
+        if score < best_score:
+            best_score = score
+            best_consensus = consensus
+            
+    return best_consensus
+
+def get_consensus_sequence(sequences):
+    """
+    Generate a consensus sequence for a given cluster of sequences.
+
+    Args:
+        sequences (list of str): List of sequences in a cluster.
+
+    Returns:
+        str: Consensus sequence derived from the cluster.
+    """
+    if not sequences:
+        return ""
+
+    # Transpose the list of sequences to group bases by position
+    transposed_bases = list(map(list, zip(*sequences)))
+    
+    # Generate consensus by finding the most common base at each position
+    consensus_sequence = []
+    for bases in transposed_bases:
+        most_common_base, _ = Counter(bases).most_common(1)[0]
+        consensus_sequence.append(most_common_base)
+    
+    return ''.join(consensus_sequence)
+
+def generate_cluster_consensus(sequences, labels):
+    """
+    Generate consensus sequences for each cluster.
+
+    Args:
+        sequences (list of str): List of all sequences.
+        labels (list of int): Cluster labels corresponding to each sequence.
+
+    Returns:
+        dict: A dictionary where each key is a cluster label and each value is the consensus sequence for that cluster.
+    """
+    consensus_sequences = {}
+    unique_labels = set(labels)
+    
+    for label in unique_labels:
+        # Get sequences belonging to the current cluster
+        cluster_sequences = [seq for seq, lbl in zip(sequences, labels) if lbl == label]
+        # Generate consensus sequence for the cluster
+        consensus_sequences[label] = get_consensus_sequence(cluster_sequences)
+    
+    return consensus_sequences
 
 
 # Function to extract k-mers from sequences
@@ -28,7 +119,7 @@ def get_kmers(sequence, k=5):
     """
     return [sequence[i:i+k] for i in range(len(sequence)-k+1)]
 
-def cluster_seq(sequences, fname):
+def cluster_seq(sequences, reference_sequence, n_clusters=3):
     """
     Cluster sequences using k-mer frequency vectors and plot the clusters.
 
@@ -44,28 +135,45 @@ def cluster_seq(sequences, fname):
     # Use CountVectorizer to convert k-mer strings to frequency vectors
     vectorizer = CountVectorizer()
     features = vectorizer.fit_transform(kmer_list).toarray()
+    
     # Apply K-means clustering
-    num_clusters = 3  # Adjust based on your data
+    num_clusters = n_clusters  # Adjust based on your data
     kmeans = KMeans(n_clusters=num_clusters, random_state=42)
     labels = kmeans.fit_predict(features)
     # Dimensionality reduction using PCA
     pca = PCA(n_components=2)
     X = pca.fit_transform(features)
+    
     # Plot the clusters
-    plt.figure(figsize=(10, 6))
     # Plot each cluster with a different color
     for cluster in range(num_clusters):
         cluster_points = X[labels == cluster]
-        plt.scatter(cluster_points[:, 0], cluster_points[:, 1], label=f'Cluster {cluster}', alpha=0.8)
-    plt.title(f'Clusters in {fname} Data')    
+    
     # Highlight the synthesized sequence
+    synthesized_kmer_string = " ".join(get_kmers(reference_sequence))
+
     synthesized_features = vectorizer.transform([synthesized_kmer_string]).toarray()
     # Find the closest point to the synthesized sequence
     distances = euclidean_distances(features, synthesized_features)
     synthesized_index = np.argmin(distances)
-    plt.scatter(X[synthesized_index, 0], X[synthesized_index, 1], color='red', marker='*', s=300)
-    plt.legend()
-    plt.savefig(f'{output_dir}/{fname}.png', dpi=300, bbox_inches='tight')
+   
+   # Generate consensus sequences for each cluster
+    consensus_sequences = generate_cluster_consensus(sequences, labels)
+
+    best_consensus = select_best_consensus(consensus_sequences=consensus_sequences, sequences=sequences, labels=labels)
+
+    """
+    decoded_sequence = ""
+    # Print or use the consensus sequences as needed
+    for cluster, consensus in consensus_sequences.items():
+        if len(consensus) > len(decoded_sequence):
+            decoded_sequence = consensus
+    """
+
+    return sum([
+        i==j for i, j in zip(reference_sequence, best_consensus)
+        ])/len(reference_sequence)
+
 
 
 def aligned_strand(indices, seqA, seqB):
