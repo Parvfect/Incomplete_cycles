@@ -69,8 +69,10 @@ def aligned_consensus(sequenced_strands, strand_length):
 
     longest_strand = get_longest_strand(sequenced_strands, strand_length)
 
+    selected_strand = min(sequenced_strands, key=len)
+
     aligned_strands = [
-                    align(sequenced_strand, longest_strand)
+                    align(sequenced_strand, selected_strand)
                     if len(sequenced_strand) > 20
                     else "" * strand_length
                     for sequenced_strand in sequenced_strands]
@@ -107,15 +109,10 @@ def weighted_aligned_cluster(sequenced_strands, strand_length, n_clusters=3, con
             continue
         clusters[label].append(strand)
 
-    print(clusters)
-
     consensus_strands = []
 
     for i in clusters:
-        if any([len(j) == 0 for j in i]):
-            continue
         consensus_strands.append(aligned_consensus(i, strand_length))
-        
 
     if not consensus:
         return aligned_consensus(consensus_strands, strand_length)
