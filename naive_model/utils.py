@@ -42,10 +42,11 @@ def get_reference_from_file(file_path):
 
 def get_recovery_percentage(consensus_strand, original_strand):
 
+    min_length = min(len(original_strand), len(consensus_strand))
     return sum([
-                1 for i in range(len(consensus_strand))
+                1 for i in range(min_length)
                 if consensus_strand[i] == original_strand[i]]
-                ) / len(consensus_strand)
+                ) / len(original_strand)
 
 
 def create_low_quality_model(filename):
