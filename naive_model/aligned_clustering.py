@@ -53,9 +53,6 @@ def align_clusters(trimmed_seqs, clusters, masize = 15):
         else:
             ma = multiple_alignment_muscle(cluster[:masize])
             fresults.append(ma)
-            
-        if i % 1000 == 0:
-            print("%",round(i*100/len(clusters),2),"of the clusters are aligned.")
 
     return fresults
 
@@ -72,8 +69,7 @@ def get_recovery_percentage(consensus_strand, original_strand):
 def conduct_align_clustering(
         original_strand, trimmed_seqs, trivial_clustering=True,
         display=True):
-
-    print("Starting clustering")
+    
     clusters = create_clusters(
         trimmed_seqs=trimmed_seqs, TRIVIAL=trivial_clustering)
 
@@ -89,7 +85,7 @@ def conduct_align_clustering(
     recoveries = [
             get_recovery_percentage(candidate, original_strand)
             for candidate in candidates
-            ]
+            ]    
 
     if display:
         print("Evaluating recovery percentage")
