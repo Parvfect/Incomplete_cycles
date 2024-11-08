@@ -20,4 +20,6 @@ My goal is to make an educated guess of effect of synthesis parameters (capping/
 
 Currently putting my code on the cluster to run for a lot of repeats to make the recovery results more consistent and a good guess. Looks like this right now, 
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/35c4b3df-13a8-46ea-beb6-726a908fd7bb/d6bf7cb7-fb54-45a1-b6b8-b8235145f144/image.png)
+![output](https://github.com/user-attachments/assets/f78aa32f-70ea-4bd1-bd3b-5b2b0a33e7b4)
+
+X axis is coupling rate and y axis is recovery percentage - github seems to black it out for some reason. They all top out close to 60%.
