@@ -154,8 +154,6 @@ def create_clusters(trimmed_seqs, TRIVIAL=True):
         d,ctr = filter_nonunique([seq[:nbeg] for seq in trimmed_seqs])
         clusters = [d[a] for a in d if len(d[a]) > 3]
         end = time.time()
-        print("Runtime:",round(end-start,1),"s")
-        print(len(clusters),"number of clusters created.")
         fclusts = clusters.copy()
     else:
         # set up the parameters and call the lsh_cluster function
