@@ -12,6 +12,8 @@ pbsim --data-type CLR --depth {repeats-per-strand} --model_qc data/model_qc_clr 
 
 2. testing_pbsim_alignment.ipynb
     > This reads the files outputted by PBSIM and attempts to recover the information using clustering - implemented in aligned_clustering.py. Most of the code is a straight copy of - https://github.com/MLI-lab/noisy_dna_data_storage/blob/master/LSH_clustering.ipynb. 
+    They basically cluster into groups of (5-15) and then run multiple sequence alignment in each cluster using MUSCLE (https://www.ebi.ac.uk/jdispatcher/msa/muscle?stype=protein), the defacto way to do it for natural bio purposes.
+    Ideally, you take consensus post, but for now I'm taking the best candidate from all the clusters. This will change.
 
 
 My goal is to make an educated guess of effect of synthesis parameters (capping/no-capping and coupling rate) on sequencing recovery - so I am not attempting to optimise recovery (at least at first).
