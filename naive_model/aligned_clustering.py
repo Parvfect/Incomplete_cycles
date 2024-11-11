@@ -65,10 +65,9 @@ def get_recovery_percentage(consensus_strand, original_strand):
                 if consensus_strand[i] == original_strand[i]]
                 ) / len(original_strand)
 
-
 def conduct_align_clustering(
         original_strand, trimmed_seqs, trivial_clustering=True,
-        display=True):
+        display=True, multiple=False):
     
     clusters = create_clusters(
         trimmed_seqs=trimmed_seqs, TRIVIAL=trivial_clustering)
@@ -82,10 +81,14 @@ def conduct_align_clustering(
         fresults=fresults
     )
 
-    recoveries = [
-            get_recovery_percentage(candidate, original_strand)
-            for candidate in candidates
-            ]    
+    if not multiple:
+        recoveries = [
+                get_recovery_percentage(candidate, original_strand)
+                for candidate in candidates
+                ]
+    else:
+        recoveries = {strand: [get_recovery_percentage(candidate, strand) for candidate in candidates] for strand in original_strand}
+        
 
     if display:
         print("Evaluating recovery percentage")
