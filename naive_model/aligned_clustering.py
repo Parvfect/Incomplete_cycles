@@ -5,6 +5,7 @@ import subprocess
 from random import shuffle
 from clustering import create_clusters
 from cluster_merging import merge_clusters
+from decoding import consensus_decoding
 
 def multiple_alignment_muscle(cluster, out=False):
     
@@ -37,7 +38,7 @@ def multiple_alignment_muscle(cluster, out=False):
     return alignedcluster
 
 
-def align_clusters(trimmed_seqs, clusters, masize = 15):
+def align_clusters(trimmed_seqs: list[str], clusters, masize = 15):
 
     fresults = []
     ### align clusters, generate candidates
@@ -57,7 +58,7 @@ def align_clusters(trimmed_seqs, clusters, masize = 15):
     return fresults
 
 
-def get_recovery_percentage(consensus_strand, original_strand):
+def get_recovery_percentage(consensus_strand: str, original_strand: str):
 
     min_length = min(len(original_strand), len(consensus_strand))
     return sum([
@@ -66,8 +67,8 @@ def get_recovery_percentage(consensus_strand, original_strand):
                 ) / len(original_strand)
 
 def conduct_align_clustering(
-        original_strand, trimmed_seqs, trivial_clustering=True,
-        display=True, multiple=False):
+        original_strand: str, trimmed_seqs: list[str], trivial_clustering=True,
+        display=True, multiple=False, best_recovery=False):
     
     clusters = create_clusters(
         trimmed_seqs=trimmed_seqs, TRIVIAL=trivial_clustering)
@@ -94,9 +95,22 @@ def conduct_align_clustering(
         print("Evaluating recovery percentage")
         print(f"Best recovery percentage in candidates = {max(recoveries)}")
 
+    if best_recovery:
+        return max(recoveries)
+
     return {
         "candidates":candidates,
         "fresults": fresults,
         "recoveries": recoveries
     }
     
+
+def k_best_candidates_merging(strand: str, candidates: list[str], cutoff_percentage=0.3):
+    recoveries = {i: get_recovery_percentage(i, strand) for i in candidates}
+
+    recoveries = sorted(recoveries.items(), key=lambda x: x[1], reverse=True)
+
+    consensus_strands = [i[0] for i in recoveries if i[1] > cutoff_percentage]
+    final_consensus = consensus_decoding(consensus_strands, len(strand))
+
+    return get_recovery_percentage(final_consensus, strand)
