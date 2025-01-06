@@ -66,10 +66,19 @@ def get_recovery_percentage(consensus_strand: str, original_strand: str):
                 if consensus_strand[i] == original_strand[i]]
                 ) / len(original_strand)
 
+def filter_sequences(trimmed_seqs, length_filtering, original_strand_length):
+    """Filter seqeunces that go into the aligned clustering based on the length"""
+
+    return [i for i in trimmed_seqs if len(i) > length_filtering * original_strand_length]
+
+
 def conduct_align_clustering(
-        original_strand: str, trimmed_seqs: list[str], trivial_clustering=True,
-        display=True, multiple=False, best_recovery=False):
+        original_strand: str, trimmed_seqs: list[str], trivial_clustering: bool=True,
+        display=True, multiple=False, best_recovery=False, length_filtering=0):
     
+    if length_filtering:
+        trimmed_seqs = filter_sequences(trimmed_seqs, length_filtering, len(original_strand))
+
     clusters = create_clusters(
         trimmed_seqs=trimmed_seqs, TRIVIAL=trivial_clustering)
 
