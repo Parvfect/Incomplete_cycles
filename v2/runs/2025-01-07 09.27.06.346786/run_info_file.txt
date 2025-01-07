@@ -1,0 +1,6 @@
+
+Run on 2025-01-07 09.27.06.346786
+Coupling Rates = [0.9]
+Simulation Repeats = 1
+Strand repeats = 10000
+Strand length = 200

@@ -5,7 +5,7 @@ import subprocess
 from random import shuffle
 from clustering import create_clusters
 from cluster_merging import merge_clusters
-from decoding import consensus_decoding
+# from decoding import consensus_decoding
 
 def multiple_alignment_muscle(cluster, out=False):
     
@@ -18,13 +18,15 @@ def multiple_alignment_muscle(cluster, out=False):
         file.write("\n")
     file.close()
 
-    muscle_exe = r"muscle-windows-v5.2.exe" 
+    # This is the muscle location - will need to change when put on the cluster
+    muscle_exe = r"C:\Users\Parv\Doc\RA\Projects\incomplete_cycles\muscle-windows-v5.2.exe"
+
     output_alignment = "clmout.fasta"
 
     #!.\muscle-windows-v5.2.exe -align clm.fasta -output clmout.fasta
     output_message = subprocess.run(
         args=[
-            ".\muscle-windows-v5.2.exe", "-align", "clm.fasta", "-output", "clmout.fasta"
+            f"{muscle_exe}", "-align", "clm.fasta", "-output", "clmout.fasta"
         ],
         capture_output=True
     )
@@ -113,7 +115,7 @@ def conduct_align_clustering(
         "recoveries": recoveries
     }
     
-
+"""
 def k_best_candidates_merging(strand: str, candidates: list[str], cutoff_percentage=0.3):
     recoveries = {i: get_recovery_percentage(i, strand) for i in candidates}
 
@@ -123,3 +125,4 @@ def k_best_candidates_merging(strand: str, candidates: list[str], cutoff_percent
     final_consensus = consensus_decoding(consensus_strands, len(strand))
 
     return get_recovery_percentage(final_consensus, strand)
+"""
