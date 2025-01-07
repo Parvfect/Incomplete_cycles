@@ -55,7 +55,7 @@ def align_clusters(trimmed_seqs, clusters, masize = 15, running_on_hpc = False):
         if len(cluster) > masize:
             for j in range(5):
                 shuffle(cluster)
-                ma = multiple_alignment_muscle(cluster[:masize])
+                ma = multiple_alignment_muscle(cluster[:masize], running_on_hpc=running_on_hpc)
                 fresults.append(ma)
         else:
             ma = multiple_alignment_muscle(cluster[:masize], running_on_hpc=running_on_hpc)
