@@ -32,7 +32,8 @@ def multiple_alignment_muscle(cluster, out = False, running_on_hpc = False):
     output_message = subprocess.run(
         args=[
             f"{muscle_exe}", "-align", "clm.fasta", "-output", "clmout.fasta"
-        ]
+        ],
+        stdout = subprocess.DEVNULL
     )
 
     msa = AlignIO.read(output_alignment, "fasta")
