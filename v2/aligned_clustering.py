@@ -8,7 +8,7 @@ from cluster_merging import merge_clusters
 import os
 # from decoding import consensus_decoding
 
-def multiple_alignment_muscle(cluster, out=False, running_on_hpc = False):
+def multiple_alignment_muscle(cluster, out = False, running_on_hpc = False):
     
     # write cluster to file
     file = open("clm.fasta","w") 
@@ -43,7 +43,7 @@ def multiple_alignment_muscle(cluster, out=False, running_on_hpc = False):
     return alignedcluster
 
 
-def align_clusters(trimmed_seqs, clusters, masize: int = 15, running_on_hpc = False):
+def align_clusters(trimmed_seqs, clusters, masize = 15, running_on_hpc = False):
 
     fresults = []
     ### align clusters, generate candidates
