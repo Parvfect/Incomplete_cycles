@@ -77,8 +77,8 @@ def filter_sequences(trimmed_seqs, length_filtering, original_strand_length):
 
 
 def conduct_align_clustering(
-        original_strand: str, trimmed_seqs, trivial_clustering: bool=True,
-        display=True, multiple=False, best_recovery=False, length_filtering=0, running_on_hpc: bool = False):
+        original_strand, trimmed_seqs, trivial_clustering = True,
+        display=True, multiple=False, best_recovery=False, length_filtering=0, running_on_hpc = False):
     
     if length_filtering:
         trimmed_seqs = filter_sequences(trimmed_seqs, length_filtering, len(original_strand))
