@@ -8,7 +8,7 @@ import cProfile
 import re
 
 synthesis_models = []
-running_on_hpc = False
+running_on_hpc = True
 
 # Parameters (argparser eventually, okay for now)
 coupling_rates = [0.9, 0.99]
