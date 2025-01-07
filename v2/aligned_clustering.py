@@ -58,7 +58,7 @@ def align_clusters(trimmed_seqs, clusters, masize = 15, running_on_hpc = False):
                 ma = multiple_alignment_muscle(cluster[:masize])
                 fresults.append(ma)
         else:
-            ma = multiple_alignment_muscle(cluster[:masize], running_on_hpc)
+            ma = multiple_alignment_muscle(cluster[:masize], running_on_hpc=running_on_hpc)
             fresults.append(ma)
 
     return fresults
