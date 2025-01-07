@@ -11,9 +11,9 @@ synthesis_models = []
 running_on_hpc = True
 
 # Parameters (argparser eventually, okay for now)
-coupling_rates = [0.99]
-sim_repeats_per_coupling_rate = 1
-strand_repeats = 1000
+coupling_rates = [0.7, 0.725, 0.75, 0.775, 0.8, 0.825, 0.85, 0.875, 0.9, 0.925, 0.95, 0.975, 0.99]
+sim_repeats_per_coupling_rate = 5
+strand_repeats = 10000
 strand_length = 200
 
 # Initiating sim run data path
