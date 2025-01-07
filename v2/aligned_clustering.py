@@ -24,6 +24,8 @@ def multiple_alignment_muscle(cluster, out = False, running_on_hpc = False):
     else:
         muscle_exe = r"C:\Users\Parv\Doc\RA\Projects\incomplete_cycles\muscle-windows-v5.2.exe"
 
+    print(running_on_hpc)
+    print(muscle_exe)
     output_alignment = "clmout.fasta"
 
     #!.\muscle-windows-v5.2.exe -align clm.fasta -output clmout.fasta
