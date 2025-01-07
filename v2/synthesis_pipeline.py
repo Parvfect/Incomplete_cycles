@@ -11,8 +11,8 @@ synthesis_models = []
 running_on_hpc = True
 
 # Parameters (argparser eventually, okay for now)
-coupling_rates = [0.9, 0.99]
-sim_repeats_per_coupling_rate = 2
+coupling_rates = [0.99]
+sim_repeats_per_coupling_rate = 1
 strand_repeats = 1000
 strand_length = 200
 
@@ -82,7 +82,8 @@ for model in tqdm(synthesis_models):
         running_on_hpc=running_on_hpc
     ))
 
-    
+    print(strand_analysis_dict)
+
     with open(parameters_path, 'a') as f:
         f.write(str(strand_analysis_dict))
         f.write('\n')
