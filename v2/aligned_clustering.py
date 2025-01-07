@@ -43,7 +43,7 @@ def multiple_alignment_muscle(cluster, out=False, running_on_hpc: bool = False):
     return alignedcluster
 
 
-def align_clusters(trimmed_seqs: list[str], clusters, masize: int = 15, running_on_hpc: bool = False):
+def align_clusters(trimmed_seqs, clusters, masize: int = 15, running_on_hpc: bool = False):
 
     fresults = []
     ### align clusters, generate candidates
@@ -78,7 +78,7 @@ def filter_sequences(trimmed_seqs, length_filtering, original_strand_length):
 
 
 def conduct_align_clustering(
-        original_strand: str, trimmed_seqs: list[str], trivial_clustering: bool=True,
+        original_strand: str, trimmed_seqs, trivial_clustering: bool=True,
         display=True, multiple=False, best_recovery=False, length_filtering=0, running_on_hpc: bool = False):
     
     if length_filtering:
