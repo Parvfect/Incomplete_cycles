@@ -78,7 +78,7 @@ for model in tqdm(synthesis_models):
         deletions_per_strand=strand_deletions,
         original_strand=model.strand,
         clustering=True,
-        length_filtering=0.2,
+        length_filtering=0,
         running_on_hpc=running_on_hpc
     ))
 
