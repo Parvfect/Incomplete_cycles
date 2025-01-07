@@ -5,9 +5,10 @@ import subprocess
 from random import shuffle
 from clustering import create_clusters
 from cluster_merging import merge_clusters
+import os
 # from decoding import consensus_decoding
 
-def multiple_alignment_muscle(cluster, out=False):
+def multiple_alignment_muscle(cluster, out=False, running_on_hpc: bool = False):
     
     # write cluster to file
     file = open("clm.fasta","w") 
@@ -17,9 +18,11 @@ def multiple_alignment_muscle(cluster, out=False):
         file.write(c)
         file.write("\n")
     file.close()
-
-    # This is the muscle location - will need to change when put on the cluster
-    muscle_exe = r"C:\Users\Parv\Doc\RA\Projects\incomplete_cycles\muscle-windows-v5.2.exe"
+    
+    if running_on_hpc:
+        muscle_exe = os.path.join(os.environ['HOME'], 'muscle.exe')
+    else:
+        muscle_exe = r"C:\Users\Parv\Doc\RA\Projects\incomplete_cycles\muscle-windows-v5.2.exe"
 
     output_alignment = "clmout.fasta"
 
@@ -40,7 +43,7 @@ def multiple_alignment_muscle(cluster, out=False):
     return alignedcluster
 
 
-def align_clusters(trimmed_seqs: list[str], clusters, masize = 15):
+def align_clusters(trimmed_seqs: list[str], clusters, masize: int = 15, running_on_hpc: bool = False):
 
     fresults = []
     ### align clusters, generate candidates
@@ -54,7 +57,7 @@ def align_clusters(trimmed_seqs: list[str], clusters, masize = 15):
                 ma = multiple_alignment_muscle(cluster[:masize])
                 fresults.append(ma)
         else:
-            ma = multiple_alignment_muscle(cluster[:masize])
+            ma = multiple_alignment_muscle(cluster[:masize], running_on_hpc)
             fresults.append(ma)
 
     return fresults
@@ -76,7 +79,7 @@ def filter_sequences(trimmed_seqs, length_filtering, original_strand_length):
 
 def conduct_align_clustering(
         original_strand: str, trimmed_seqs: list[str], trivial_clustering: bool=True,
-        display=True, multiple=False, best_recovery=False, length_filtering=0):
+        display=True, multiple=False, best_recovery=False, length_filtering=0, running_on_hpc: bool = False):
     
     if length_filtering:
         trimmed_seqs = filter_sequences(trimmed_seqs, length_filtering, len(original_strand))
@@ -86,7 +89,8 @@ def conduct_align_clustering(
 
     fresults = align_clusters(
         trimmed_seqs=trimmed_seqs,
-        clusters=clusters
+        clusters=clusters,
+        running_on_hpc=running_on_hpc
     )
 
     candidates = merge_clusters(

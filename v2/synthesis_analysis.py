@@ -5,7 +5,8 @@ from aligned_clustering import conduct_align_clustering
 def conduct_analysis(
         strand_id: str, coupling_rate: float, 
         capping: bool, synthesized_strands: list[str], original_strand: str,
-        deletions_per_strand: list[int], clustering: bool = False, length_filtering:float = 0) -> dict:
+        deletions_per_strand: list[int], clustering: bool = False, length_filtering:float = 0,
+        running_on_hpc: bool = False) -> dict:
     """
     Takes in the synthesized strands and the original strand. Gives out the mean length, std, max length, deletions (got to change the synthesis function for this) for the synthesized strands. Clustering to see the best candidate recovery percentage after simulating synthesis.
     """
@@ -30,6 +31,7 @@ def conduct_analysis(
             original_strand=original_strand,
             trimmed_seqs=synthesized_strands,
             display=False, best_recovery=True,
-            length_filtering=length_filtering)
+            length_filtering=length_filtering,
+            running_on_hpc=running_on_hpc)
 
     return analysis_dict

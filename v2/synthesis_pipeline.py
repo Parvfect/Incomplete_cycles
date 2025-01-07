@@ -8,18 +8,23 @@ import cProfile
 import re
 
 synthesis_models = []
+running_on_hpc = False
 
 # Parameters (argparser eventually, okay for now)
-coupling_rates = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
-coupling_rates = [0.9]
-sim_repeats_per_coupling_rate = 1
-strand_repeats = 10000
+coupling_rates = [0.9, 0.99]
+sim_repeats_per_coupling_rate = 2
+strand_repeats = 1000
 strand_length = 200
-
 
 # Initiating sim run data path
 timestamp = str(datetime.now()).replace(':', '.')
 preceeding_path = os.path.join('runs', timestamp)
+
+if running_on_hpc:
+    home_dir = os.environ['HOME']
+    preceeding_path = os.path.join(home_dir, preceeding_path)
+
+# Assuming that the runs folder already exists in the directory - otherwise it breaks
 os.mkdir(preceeding_path)
 
 synthesized_strands_write_path = os.path.join(preceeding_path, 'synthesized.fasta')
@@ -73,17 +78,15 @@ for model in tqdm(synthesis_models):
         deletions_per_strand=strand_deletions,
         original_strand=model.strand,
         clustering=True,
-        length_filtering=0.2
+        length_filtering=0.2,
+        running_on_hpc=running_on_hpc
     ))
 
-    print(strand_analysis_dict)
-
-    """
+    
     with open(parameters_path, 'a') as f:
         f.write(str(strand_analysis_dict))
         f.write('\n')
-    """
-
+    
 ### Write to file
 """
 # So one file for each seperate model - about 20ish files
