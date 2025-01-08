@@ -24,8 +24,6 @@ def multiple_alignment_muscle(cluster, out = False, running_on_hpc = False):
     else:
         muscle_exe = r"C:\Users\Parv\Doc\RA\Projects\incomplete_cycles\muscle-windows-v5.2.exe"
 
-    print(running_on_hpc)
-    print(muscle_exe)
     output_alignment = "clmout.fasta"
 
     #!.\muscle-windows-v5.2.exe -align clm.fasta -output clmout.fasta
@@ -33,7 +31,7 @@ def multiple_alignment_muscle(cluster, out = False, running_on_hpc = False):
         args=[
             f"{muscle_exe}", "-align", "clm.fasta", "-output", "clmout.fasta"
         ],
-        stdout = subprocess.DEVNULL
+        capture_output=True
     )
 
     msa = AlignIO.read(output_alignment, "fasta")
@@ -105,14 +103,15 @@ def conduct_align_clustering(
                 for candidate in candidates
                 ]
     else:
-        recoveries = {strand: [get_recovery_percentage(candidate, strand) for candidate in candidates] for strand in original_strand}
+        # Iterates through all the original strands and gives the best recovery from all the candidates for all of them
+        recoveries = {strand: max([get_recovery_percentage(candidate, strand) for candidate in candidates]) for strand in original_strand}
         
 
     if display:
         print("Evaluating recovery percentage")
         print(f"Best recovery percentage in candidates = {max(recoveries)}")
 
-    if best_recovery:
+    if best_recovery and not multiple:
         return max(recoveries)
 
     return {
