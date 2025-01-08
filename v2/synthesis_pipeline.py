@@ -70,16 +70,21 @@ for model in tqdm(synthesis_models):
     synthesized_strands, strand_deletions = model.simulate_synthesis(return_deletions=True)
     strand_id = str(model.strand_id)
 
-    strand_analysis_dict = (conduct_analysis(
-        strand_id=strand_id, coupling_rate=model.coupling_rate,
-        capping=model.capping,
-        synthesized_strands=synthesized_strands,
-        deletions_per_strand=strand_deletions,
-        original_strand=model.strand,
-        clustering=True,
-        length_filtering=0,
-        running_on_hpc=running_on_hpc
-    ))
+    try:
+        strand_analysis_dict = (conduct_analysis(
+            strand_id=strand_id, coupling_rate=model.coupling_rate,
+            capping=model.capping,
+            synthesized_strands=synthesized_strands,
+            deletions_per_strand=strand_deletions,
+            original_strand=model.strand,
+            clustering=True,
+            length_filtering=0,
+            running_on_hpc=running_on_hpc
+        ))
+
+    except Exception as e:
+        continue
+    print(strand_analysis_dict)
 
     with open(parameters_path, 'a') as f:
         f.write(str(strand_analysis_dict))
