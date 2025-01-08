@@ -54,14 +54,13 @@ for coupling_rate in coupling_rates:
 
         synthesis_models.append(NaiveSynthesisModel(
             coupling_rate, strand_length=strand_length, repeats=strand_repeats, capping=False, write_file=False))
-        
-"""
+       
 # Get all the original strands and write them to the file
 for model in synthesis_models:
     with open(original_strand_write_path, 'a') as f:
         f.write(
             f'{model.strand_id} {model.coupling_rate} {model.capping}\n{model.strand}\n\n')
-"""
+
                  
 # Synthesise strands and write them - add analysis?
 synthesized_strands_arr = []
@@ -78,16 +77,19 @@ for model in tqdm(synthesis_models):
         deletions_per_strand=strand_deletions,
         original_strand=model.strand,
         clustering=True,
-        length_filtering=0.2,
+        length_filtering=0,
         running_on_hpc=running_on_hpc
     ))
-
-    print(strand_analysis_dict)
 
     with open(parameters_path, 'a') as f:
         f.write(str(strand_analysis_dict))
         f.write('\n')
-    
+
+    with open(synthesized_strands_write_path, 'a') as f:
+        for strand in synthesized_strands:
+            f.write(f">{strand_id}\n")
+            f.write(strand + '\n\n')
+
 ### Write to file
 """
 # So one file for each seperate model - about 20ish files
