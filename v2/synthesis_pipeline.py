@@ -11,8 +11,8 @@ synthesis_models = []
 running_on_hpc = True
 
 # Parameters (argparser eventually, okay for now)
-coupling_rates = [0.7, 0.725, 0.75, 0.775, 0.8, 0.825, 0.85, 0.875, 0.9, 0.925, 0.95, 0.975, 0.99]
-sim_repeats_per_coupling_rate = 5
+coupling_rates = [0.7, 0.75, 0.8, 0.85, 0.9, 0.925, 0.95, 0.975, 0.99]
+sim_repeats_per_coupling_rate = 3
 strand_repeats = 10000
 strand_length = 200
 
@@ -82,31 +82,15 @@ for model in tqdm(synthesis_models):
             running_on_hpc=running_on_hpc
         ))
 
+        with open(parameters_path, 'a') as f:
+            f.write(str(strand_analysis_dict))
+            f.write('\n')
+
+        with open(synthesized_strands_write_path, 'a') as f:
+            for strand in synthesized_strands:
+                if strand and len(strand) > 1:
+                    f.write(f">{strand_id}\n")
+                    f.write(strand + '\n\n')
+    
     except Exception as e:
         continue
-    print(strand_analysis_dict)
-
-    with open(parameters_path, 'a') as f:
-        f.write(str(strand_analysis_dict))
-        f.write('\n')
-
-    with open(synthesized_strands_write_path, 'a') as f:
-        for strand in synthesized_strands:
-            f.write(f">{strand_id}\n")
-            f.write(strand + '\n\n')
-
-### Write to file
-"""
-# So one file for each seperate model - about 20ish files
-split_strands = [synthesized_strands[i:i + 9000] for i in range(0, len(synthesized_strands) - 9001, 9000)]
-
-for i, strands_ in enumerate(split_strands):  
-    write_path = os.path.join(preceeding_path, f'synthesized_{strand_id}_{i}.fasta')
-    with open(write_path, 'w') as f:
-        for strand in strands_:
-
-            if len(strand) < 100: # PBSim does not accept strands that are less than 100 bases long
-                continue
-            f.write(f">{strand_id}\n")
-            f.write(strand + '\n\n')
-"""
