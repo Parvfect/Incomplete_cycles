@@ -1,4 +1,67 @@
 
+from Bio import SeqIO
+from seq_stat import align
+import pandas as pd
+import numpy as np
+
+
+def parse_biopython(input_fastq):
+    for record in SeqIO.parse(input_fastq, 'fastq'):
+        yield record
+
+def parse_fastq_data(fastq_filepath):
+    sequenced_strands = []
+    for i, record in enumerate(parse_biopython(fastq_filepath)):
+        sequenced_strands.append(record)
+
+def postprocess_badread_sequencing_data(fastq_filepath, synthesized_padded_dict=None, reverse_oriented=False, filter=False):
+    """
+    The record description contains the strand starting, ending and orientation
+    """
+    sequenced_strands = []
+    for i, record in enumerate(parse_biopython(fastq_filepath)):
+
+        strand = str(record.seq)
+
+        # Correcting orientation if it is wrong
+        if reverse_oriented:
+            try:
+                orientation = record.description.split()[1].split(',')[2]
+                if orientation == '-strand':
+                    strand = strand[::-1]
+            except:
+                continue
+
+        # Aligning to the target strand if we are filtering        
+        if filter:
+            try:
+                strand_id = record.description.split()[1].split(',')[0]
+                if strand_id in synthesized_padded_dict.keys():
+                        target_strand = synthesized_padded_dict[strand_id]
+                else:
+                    continue
+
+                aligned, identity, indices = align(target_strand, strand)
+
+                if identity > 0.7:
+                    sequenced_strands.append(strand)
+            except:
+                continue
+        else:
+            sequenced_strands.append(strand)
+
+    return sequenced_strands
+
+def post_process_results(recoveries_strands, capping_flags, coupling_rates):
+
+    columns = [
+    'capping',
+    'coupling_rate',
+    'pool_recovery'
+    ]
+    
+    return pd.DataFrame(np.array([capping_flags, coupling_rates, recoveries_strands]).T, columns=columns)
+    
 
 def read_synthesized_strands_from_file(file_path):
 
@@ -37,3 +100,12 @@ def get_original_strands(original_strand_filepath):
                     strands.append(split_line[0])
 
     return ids, coupling_rates, capping_flags, strands
+
+def get_recovery_percentage(consensus_strand, original_strand):
+    """Gets recovery percentage based on two strands. Chooses the length of the original strand to evaluate identity"""
+
+    min_length = min(len(original_strand), len(consensus_strand))
+    return sum([
+                1 for i in range(min_length)
+                if consensus_strand[i] == original_strand[i]]
+                ) / len(original_strand)
