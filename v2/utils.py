@@ -14,23 +14,22 @@ def parse_fastq_data(fastq_filepath):
     for i, record in enumerate(parse_biopython(fastq_filepath)):
         sequenced_strands.append(record)
 
-def postprocess_badread_sequencing_data(fastq_filepath, synthesized_padded_dict=None, reverse_oriented=False, filter=False):
+def postprocess_badread_sequencing_data(fastq_filepath, badread_data_flag=False, synthesized_padded_dict=None, reverse_oriented=False, filter=False):
     """
     The record description contains the strand starting, ending and orientation
     """
     sequenced_strands = []
     for i, record in enumerate(parse_biopython(fastq_filepath)):
-
         strand = str(record.seq)
-
-        # Correcting orientation if it is wrong
-        if reverse_oriented:
-            try:
-                orientation = record.description.split()[1].split(',')[2]
-                if orientation == '-strand':
-                    strand = strand[::-1]
-            except:
-                continue
+        if badread_data_flag:
+            # Correcting orientation if it is wrong
+            if reverse_oriented:
+                try:
+                    orientation = record.description.split()[1].split(',')[2]
+                    if orientation == '-strand':
+                        strand = strand[::-1]
+                except:
+                    continue
 
         # Aligning to the target strand if we are filtering        
         if filter:
@@ -47,8 +46,7 @@ def postprocess_badread_sequencing_data(fastq_filepath, synthesized_padded_dict=
                     sequenced_strands.append(strand)
             except:
                 continue
-        else:
-            sequenced_strands.append(strand)
+        sequenced_strands.append(strand)
 
     return sequenced_strands
 
