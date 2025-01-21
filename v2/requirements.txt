@@ -3,3 +3,4 @@ biopython
 numpy
 tqdm
 scikit-learn
+matplotlib
