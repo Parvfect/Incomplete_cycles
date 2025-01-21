@@ -21,7 +21,7 @@ parser.add_argument('--output_filepath', type=str, help="Output filepath.")
 parser.add_argument('--sampling_rate', type=float, help="Sampling rate - defaults to 1.0")
 parser.add_argument('--badread_data', action='store_true', help="Badread data flag")
 
-parser.set_defaults(reads_filepath=None, info_filepath=None, output_filepath=None, sample=1.0)
+parser.set_defaults(reads_filepath=None, info_filepath=None, output_filepath=None, sampling_rate=1.0)
 
 def get_run_information_from_files(info_filepath):
     """Gets the original strands from generated file"""
@@ -64,18 +64,20 @@ def create_clustering_report_file(
         recoveries, output_filepath, original_strands=None, coupling_rates=None, capping_flags=None):
 
     uid = str(uuid.uuid4())
+    timestamp = str(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H_%M_%S'))
+    save_path = os.path.join(output_filepath, timestamp)
 
-    os.mkdir() # Timestamp make results directory
+    os.mkdir(save_path) # Timestamp make results directory
 
     # Creating results summary if original strands are provided
     if original_strands is not None:
         df = post_process_results(recoveries_strands=list(
             recoveries['recoveries'].values()),
             capping_flags=capping_flags, coupling_rates=coupling_rates)
-        df.to_csv(os.path.join(output_filepath, f"results_summary_{uid}.csv"))
+        df.to_csv(os.path.join(save_path, f"results_summary_{uid}.csv"))
 
     # Writing the recoveries object
-    out_file = open(os.path.join(output_filepath, f"recoveries_{uid}.json"), "w")
+    out_file = open(os.path.join(save_path, f"recoveries_{uid}.json"), "w")
     json.dump(recoveries, out_file, indent = 6)
     out_file.close()
 
@@ -111,7 +113,7 @@ if __name__ == '__main__':
 
     recoveries = cluster_reads(sequenced_strands=sequenced_strands, original_strands=original_strands, sampling_rate=sampling_rate)
 
-    print(recoveries)
+    print(recoveries['recoveries'])
 
     create_clustering_report_file(recoveries=recoveries, output_filepath=output_filepath,
                                   original_strands=original_strands, coupling_rates=coupling_rates,
