@@ -20,8 +20,9 @@ parser.add_argument('--info_filepath', type=str, help="Path to original_strands.
 parser.add_argument('--output_filepath', type=str, help="Output filepath.")
 parser.add_argument('--sampling_rate', type=float, help="Sampling rate - defaults to 1.0")
 parser.add_argument('--badread_data', action='store_true', help="Badread data flag")
+parser.add_argument('--hpc', action='store_true', help="Running on HPC flag")
 
-parser.set_defaults(reads_filepath=None, info_filepath=None, output_filepath=None, sampling_rate=1.0)
+parser.set_defaults(reads_filepath=None, info_filepath=None, output_filepath=None, sampling_rate=1.0, hpc=False)
 
 def get_run_information_from_files(info_filepath):
     """Gets the original strands from generated file"""
@@ -44,20 +45,22 @@ def extract_reads(reads_filepath, badread_data_flag=False, reverse_oriented=True
         
     return random.sample(sequenced_strands, int(len(sequenced_strands) * sampling_rate))
 
-def cluster_reads(sequenced_strands, original_strands=None, sampling_rate=1.0):
+def cluster_reads(sequenced_strands, original_strands=None, sampling_rate=1.0, hpc=False):
     """Conducts aligned clustering for a given read bunch and compared with the original strands"""
 
     if original_strands:
         recoveries = conduct_align_clustering(
             original_strand=original_strands,
             trimmed_seqs=sequenced_strands,
-            multiple=True
+            multiple=True,
+            running_on_hpc=hpc
         )
     else:
         recoveries = conduct_align_clustering(
             original_strand=original_strands,
             trimmed_seqs=sequenced_strands,
-            multiple=True
+            multiple=True,
+            running_on_hpc=hpc
         )
     return recoveries
 
@@ -93,6 +96,7 @@ if __name__ == '__main__':
     sampling_rate = float(args.sampling_rate)
     badread_data_flag = args.badread_data
     output_filepath = args.output_filepath
+    hpc = args.hpc
 
     #print(reads_filepath)
     #print(info_filepath)
@@ -118,7 +122,7 @@ if __name__ == '__main__':
     
     print(f"Number of strands in the pool = {len(sequenced_strands)}\n\n")
 
-    recoveries = cluster_reads(sequenced_strands=sequenced_strands, original_strands=original_strands, sampling_rate=sampling_rate)
+    recoveries = cluster_reads(sequenced_strands=sequenced_strands, original_strands=original_strands, sampling_rate=sampling_rate, hpc=hpc)
 
     print(recoveries['recoveries'])
 
