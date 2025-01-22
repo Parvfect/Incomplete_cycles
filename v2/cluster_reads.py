@@ -93,6 +93,10 @@ if __name__ == '__main__':
     badread_data_flag = args.badread_data
     output_filepath = args.output_filepath
 
+    print(reads_filepath)
+    print(info_filepath)
+    print()
+
     if output_filepath is None:
         output_filepath = info_filepath
 
@@ -106,10 +110,12 @@ if __name__ == '__main__':
     if info_filepath:
         original_strand_ids, coupling_rates, capping_flags, original_strands = get_run_information_from_files(
             info_filepath=info_filepath)
+        
+    print(f"Original strands loaded \n {original_strands}\n\n")
 
     sequenced_strands = extract_reads_from_fastq(reads_filepath=reads_filepath, badread_data_flag=badread_data_flag, sampling_rate=sampling_rate)
     
-    print(f"Number of strands in the pool = {len(sequenced_strands)}")
+    print(f"Number of strands in the pool = {len(sequenced_strands)}\n\n")
 
     recoveries = cluster_reads(sequenced_strands=sequenced_strands, original_strands=original_strands, sampling_rate=sampling_rate)
 
