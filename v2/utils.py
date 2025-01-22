@@ -62,6 +62,7 @@ def post_process_results(recoveries_strands, capping_flags, coupling_rates):
     
 
 def read_synthesized_strands_from_file(file_path, ids=False):
+    """Not returning ids currently"""
 
     sequences = []
     ids = []
@@ -72,16 +73,15 @@ def read_synthesized_strands_from_file(file_path, ids=False):
     for line in lines:
         if line.startswith('>'):
             ids.append(line[1:].strip())
+
         if line.startswith('A') or line.startswith('C') or line.startswith('G') or line.startswith('T'):
             sequences.append(line.strip())
     
-    if ids:
-        return sequences, ids
-    else:
-        return sequences
+    return sequences
 
 def read_fasta_data(fasta_filepath):
-    return read_synthesized_strands_from_file(fasta_filepath)
+    sequences = read_synthesized_strands_from_file(fasta_filepath, ids=False)
+    return sequences
 
 def get_original_strands(original_strand_filepath):
     ids = []
@@ -117,4 +117,4 @@ def create_fasta_file(ids, strands, output_filepath='output.fasta'):
     with open(output_filepath, 'w') as f:
         for i, strand in enumerate(strands):
             f.write(f">{ids[i]}\n")
-            f.write(strand + '\n')
+            f.write(strand + '\n\n')
