@@ -1,6 +1,6 @@
 
 from aligned_clustering import conduct_align_clustering
-from utils import get_original_strands, postprocess_badread_sequencing_data, post_process_results
+from utils import get_original_strands, postprocess_badread_sequencing_data, post_process_results, read_fasta_data
 import argparse
 from datetime import datetime
 import os
@@ -34,13 +34,14 @@ def get_run_information_from_files(info_filepath):
 
     return original_strand_ids, coupling_rates, capping_flags, original_strands
 
-def extract_reads_from_fastq(reads_filepath, badread_data_flag=False, reverse_oriented=True, sampling_rate=1.0):
+def extract_reads(reads_filepath, badread_data_flag=False, reverse_oriented=True, sampling_rate=1.0):
 
-    # TODO: Add filter option
-    # TODO: Use synthesized padded dict to generate some run statistics
-    sequenced_strands = postprocess_badread_sequencing_data(fastq_filepath=reads_filepath,
-                                                            badread_data_flag=badread_data_flag,
-                                                             reverse_oriented=reverse_oriented)
+    if badread_data_flag:
+        sequenced_strands = read_fasta_data(reads_filepath)
+    else:
+        sequenced_strands = postprocess_badread_sequencing_data(fastq_filepath=reads_filepath,
+                                                                reverse_oriented=reverse_oriented)
+        
     return random.sample(sequenced_strands, int(len(sequenced_strands) * sampling_rate))
 
 def cluster_reads(sequenced_strands, original_strands=None, sampling_rate=1.0):
@@ -113,7 +114,7 @@ if __name__ == '__main__':
         
     print(f"Original strands loaded \n {original_strands}\n\n")
 
-    sequenced_strands = extract_reads_from_fastq(reads_filepath=reads_filepath, badread_data_flag=badread_data_flag, sampling_rate=sampling_rate)
+    sequenced_strands = extract_reads(reads_filepath=reads_filepath, badread_data_flag=badread_data_flag, sampling_rate=sampling_rate)
     
     print(f"Number of strands in the pool = {len(sequenced_strands)}\n\n")
 

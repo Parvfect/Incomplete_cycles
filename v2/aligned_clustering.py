@@ -34,7 +34,6 @@ def multiple_alignment_muscle(cluster, out = False, running_on_hpc = False):
             args=[
                 f"{muscle_exe}", "-align", "clm.fasta", "-output", "clmout.fasta"
             ],
-            capture_output=True,
             check=True,
             timeout=120
         )
@@ -132,7 +131,13 @@ def conduct_align_clustering(
                 ]
     else:
         # Iterates through all the original strands and gives the best recovery from all the candidates for all of them
-        recoveries = {strand: max([get_recovery_percentage(candidate, strand) for candidate in candidates]) for strand in original_strand}
+        recoveries = {}
+        for strand in original_strand:
+            recoveries_strand = [get_recovery_percentage(candidate, strand) for candidate in candidates]
+            if len(recoveries_strand) > 0:
+                recoveries[strand] = max(recoveries_strand)
+            else:
+                recoveries[strand] = 0
 
     if best_recovery and not multiple:
         return max(recoveries)

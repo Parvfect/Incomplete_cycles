@@ -14,22 +14,21 @@ def parse_fastq_data(fastq_filepath):
     for i, record in enumerate(parse_biopython(fastq_filepath)):
         sequenced_strands.append(record)
 
-def postprocess_badread_sequencing_data(fastq_filepath, badread_data_flag=False, synthesized_padded_dict=None, reverse_oriented=False, filter=False):
+def postprocess_badread_sequencing_data(fastq_filepath, synthesized_padded_dict=None, reverse_oriented=False, filter=False):
     """
     The record description contains the strand starting, ending and orientation
     """
     sequenced_strands = []
     for i, record in enumerate(parse_biopython(fastq_filepath)):
         strand = str(record.seq)
-        if badread_data_flag:
-            # Correcting orientation if it is wrong
-            if reverse_oriented:
-                try:
-                    orientation = record.description.split()[1].split(',')[2]
-                    if orientation == '-strand':
-                        strand = strand[::-1]
-                except:
-                    continue
+        # Correcting orientation if it is wrong
+        if reverse_oriented:
+            try:
+                orientation = record.description.split()[1].split(',')[2]
+                if orientation == '-strand':
+                    strand = strand[::-1]
+            except:
+                continue
 
         # Aligning to the target strand if we are filtering        
         if filter:
@@ -46,6 +45,7 @@ def postprocess_badread_sequencing_data(fastq_filepath, badread_data_flag=False,
                     sequenced_strands.append(strand)
             except:
                 continue
+
         sequenced_strands.append(strand)
 
     return sequenced_strands
@@ -61,7 +61,7 @@ def post_process_results(recoveries_strands, capping_flags, coupling_rates):
     return pd.DataFrame(np.array([capping_flags, coupling_rates, recoveries_strands]).T, columns=columns)
     
 
-def read_synthesized_strands_from_file(file_path):
+def read_synthesized_strands_from_file(file_path, ids=False):
 
     sequences = []
     ids = []
@@ -74,9 +74,14 @@ def read_synthesized_strands_from_file(file_path):
             ids.append(line[1:].strip())
         if line.startswith('A') or line.startswith('C') or line.startswith('G') or line.startswith('T'):
             sequences.append(line.strip())
+    
+    if ids:
+        return sequences, ids
+    else:
+        return sequences
 
-    return sequences, ids
-
+def read_fasta_data(fasta_filepath):
+    return read_synthesized_strands_from_file(fasta_filepath)
 
 def get_original_strands(original_strand_filepath):
     ids = []
@@ -107,3 +112,9 @@ def get_recovery_percentage(consensus_strand, original_strand):
                 1 for i in range(min_length)
                 if consensus_strand[i] == original_strand[i]]
                 ) / len(original_strand)
+
+def create_fasta_file(ids, strands, output_filepath='output.fasta'):
+    with open(output_filepath, 'w') as f:
+        for i, strand in enumerate(strands):
+            f.write(f">{ids[i]}\n")
+            f.write(strand + '\n')
