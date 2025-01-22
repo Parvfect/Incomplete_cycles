@@ -34,6 +34,8 @@ def multiple_alignment_muscle(cluster, out = False, running_on_hpc = False):
             args=[
                 f"{muscle_exe}", "-align", "clm.fasta", "-output", "clmout.fasta"
             ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             check=True,
             timeout=120
         )

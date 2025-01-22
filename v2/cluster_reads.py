@@ -36,7 +36,7 @@ def get_run_information_from_files(info_filepath):
 
 def extract_reads(reads_filepath, badread_data_flag=False, reverse_oriented=True, sampling_rate=1.0):
 
-    if badread_data_flag:
+    if not badread_data_flag:
         sequenced_strands = read_fasta_data(reads_filepath)
     else:
         sequenced_strands = postprocess_badread_sequencing_data(fastq_filepath=reads_filepath,
@@ -94,9 +94,9 @@ if __name__ == '__main__':
     badread_data_flag = args.badread_data
     output_filepath = args.output_filepath
 
-    print(reads_filepath)
-    print(info_filepath)
-    print()
+    #print(reads_filepath)
+    #print(info_filepath)
+    #print()
 
     if output_filepath is None:
         output_filepath = info_filepath
