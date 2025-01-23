@@ -18,11 +18,17 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--reads_filepath', type=str, help="Path to reads.fasta")
 parser.add_argument('--info_filepath', type=str, help="Path to original_strands.txt. Also the default output filepath.")
 parser.add_argument('--output_filepath', type=str, help="Output filepath.")
+
 parser.add_argument('--sampling_rate', type=float, help="Sampling rate - defaults to 1.0")
+parser.add_argument('--min_cluster_length', type=float, help="Minimum average length of strands in the cluster")
+parser.add_argument('--max_cluster_length', type=float, help="Maximum average length of strands in the cluster")
+
 parser.add_argument('--badread_data', action='store_true', help="Badread data flag")
 parser.add_argument('--hpc', action='store_true', help="Running on HPC flag")
 
-parser.set_defaults(reads_filepath=None, info_filepath=None, output_filepath=None, sampling_rate=1.0, hpc=False)
+parser.set_defaults(
+    reads_filepath=None, info_filepath=None, output_filepath=None, sampling_rate=1.0, hpc=False, badread_data_flag=False,
+    min_cluster_length=70, max_cluster_length=200)
 
 def get_run_information_from_files(info_filepath):
     """Gets the original strands from generated file"""
@@ -45,7 +51,8 @@ def extract_reads(reads_filepath, badread_data_flag=False, reverse_oriented=True
         
     return random.sample(sequenced_strands, int(len(sequenced_strands) * sampling_rate))
 
-def cluster_reads(sequenced_strands, original_strands=None, sampling_rate=1.0, hpc=False):
+def cluster_reads(sequenced_strands, original_strands=None, sampling_rate=1.0, hpc=False,
+                  min_cluster_length=70, max_cluster_length=200):
     """Conducts aligned clustering for a given read bunch and compared with the original strands"""
 
     if original_strands:
@@ -53,14 +60,18 @@ def cluster_reads(sequenced_strands, original_strands=None, sampling_rate=1.0, h
             original_strand=original_strands,
             trimmed_seqs=sequenced_strands,
             multiple=True,
-            running_on_hpc=hpc
+            running_on_hpc=hpc,
+            min_cluster_length=min_cluster_length,
+            max_cluster_length=max_cluster_length
         )
     else:
         recoveries = conduct_align_clustering(
             original_strand=original_strands,
             trimmed_seqs=sequenced_strands,
             multiple=True,
-            running_on_hpc=hpc
+            running_on_hpc=hpc,
+            min_cluster_length=min_cluster_length,
+            max_cluster_length=max_cluster_length
         )
     return recoveries
 
@@ -94,13 +105,11 @@ if __name__ == '__main__':
     reads_filepath = args.reads_filepath
     info_filepath = args.info_filepath
     sampling_rate = float(args.sampling_rate)
+    min_cluster_length = args.min_cluster_length
+    max_cluster_length = args.max_cluster_length
     badread_data_flag = args.badread_data
     output_filepath = args.output_filepath
     hpc = args.hpc
-
-    #print(reads_filepath)
-    #print(info_filepath)
-    #print()
 
     if output_filepath is None:
         output_filepath = info_filepath
@@ -116,15 +125,21 @@ if __name__ == '__main__':
         original_strand_ids, coupling_rates, capping_flags, original_strands = get_run_information_from_files(
             info_filepath=info_filepath)
         
-    print(f"Original strands loaded \n {original_strands}\n\n")
+        print(f" {len(original_strands)} Unique reference strands loaded \n\n")
 
+    else:
+        if not output_filepath:
+            print("No output filepath or info filepath provided!")
+            exit()
+        
     sequenced_strands = extract_reads(reads_filepath=reads_filepath, badread_data_flag=badread_data_flag, sampling_rate=sampling_rate)
     
     print(f"Number of strands in the pool = {len(sequenced_strands)}\n\n")
 
-    recoveries = cluster_reads(sequenced_strands=sequenced_strands, original_strands=original_strands, sampling_rate=sampling_rate, hpc=hpc)
+    recoveries = cluster_reads(sequenced_strands=sequenced_strands, original_strands=original_strands, sampling_rate=sampling_rate, hpc=hpc,
+                               min_cluster_length=min_cluster_length, max_cluster_length=max_cluster_length)
 
-    print(recoveries['recoveries'])
+    print(recoveries)
 
     create_clustering_report_file(recoveries=recoveries, output_filepath=output_filepath,
                                   original_strands=original_strands, coupling_rates=coupling_rates,

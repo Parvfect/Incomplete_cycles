@@ -104,7 +104,8 @@ def filter_sequences(trimmed_seqs, length_filtering, original_strand_length):
 
 def conduct_align_clustering(
         trimmed_seqs, original_strand = None, trivial_clustering = True,
-        multiple = False, best_recovery = False, length_filtering = 0, running_on_hpc = False):
+        multiple = False, best_recovery = False, length_filtering = 0, running_on_hpc = False,
+        min_cluster_length=50, max_cluster_length=200):
     
     if length_filtering:
         trimmed_seqs = filter_sequences(trimmed_seqs, length_filtering, len(original_strand))
@@ -115,7 +116,9 @@ def conduct_align_clustering(
     fresults = align_clusters(
         trimmed_seqs=trimmed_seqs,
         clusters=clusters,
-        running_on_hpc=running_on_hpc
+        running_on_hpc=running_on_hpc,
+        min_cluster_length=min_cluster_length,
+        max_cluster_length=max_cluster_length
     )
 
     candidates = merge_clusters(
