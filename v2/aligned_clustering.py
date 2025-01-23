@@ -52,7 +52,7 @@ def multiple_alignment_muscle(cluster, out = False, running_on_hpc = False):
     return alignedcluster
 
 
-def align_clusters(trimmed_seqs, clusters, masize = 15, running_on_hpc = False, min_cluster_length = 150):
+def align_clusters(trimmed_seqs, clusters, masize = 15, running_on_hpc = False, min_cluster_length = 70, max_cluster_length=160):
 
     fresults = []
 
@@ -60,7 +60,8 @@ def align_clusters(trimmed_seqs, clusters, masize = 15, running_on_hpc = False, 
     clusters_arr = [[trimmed_seqs[i] for i in clusterinds] for clusterinds in clusters]
 
     # Filtering the clusters based on the average strand length of the cluster
-    clusters_arr = [i for i in clusters_arr if sum([len(j) for j in i]) / len(i) > min_cluster_length]
+    clusters_arr = [
+        i for i in clusters_arr if sum([len(j) for j in i]) / len(i) > min_cluster_length and sum([len(j) for j in i]) / len(i) < max_cluster_length]
     
     print(f"Number of clusters = {len(clusters_arr)}")
 
