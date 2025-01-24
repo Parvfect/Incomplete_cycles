@@ -141,6 +141,9 @@ if __name__ == '__main__':
 
     print(recoveries)
 
-    create_clustering_report_file(recoveries=recoveries, output_filepath=output_filepath,
+    if not info_filepath:
+        create_clustering_report_file(recoveries=recoveries, output_filepath=output_filepath)
+    else:
+        create_clustering_report_file(recoveries=recoveries, output_filepath=output_filepath,
                                   original_strands=original_strands, coupling_rates=coupling_rates,
                                   capping_flags=capping_flags)
