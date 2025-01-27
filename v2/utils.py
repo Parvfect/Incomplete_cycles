@@ -3,6 +3,7 @@ from Bio import SeqIO
 from seq_stat import align
 import pandas as pd
 import numpy as np
+import random
 
 
 def parse_biopython(input_fastq):
@@ -76,6 +77,9 @@ def read_synthesized_strands_from_file(file_path, ids=False):
 
         if line.startswith('A') or line.startswith('C') or line.startswith('G') or line.startswith('T'):
             sequences.append(line.strip())
+
+    if ids:
+        return sequences, ids
     
     return sequences
 
@@ -83,7 +87,7 @@ def read_fasta_data(fasta_filepath):
     sequences = read_synthesized_strands_from_file(fasta_filepath, ids=False)
     return sequences
 
-def get_original_strands(original_strand_filepath):
+def get_original_strands(original_strand_filepath, plain=False):
     ids = []
     coupling_rates = []
     capping_flags = []
@@ -101,9 +105,10 @@ def get_original_strands(original_strand_filepath):
                     capping_flags.append(split_line[2])
                 else:
                     strands.append(split_line[0])
-
+    if plain:
+        return strands
     return ids, coupling_rates, capping_flags, strands
-
+    
 def get_recovery_percentage(consensus_strand, original_strand):
     """Gets recovery percentage based on two strands. Chooses the length of the original strand to evaluate identity"""
 
@@ -118,3 +123,9 @@ def create_fasta_file(ids, strands, output_filepath='output.fasta'):
         for i, strand in enumerate(strands):
             f.write(f">{ids[i]}\n")
             f.write(strand + '\n\n')
+
+def create_random_strand(strand_length):
+    strand = ""
+    base_choices = ['A', 'C', 'T', 'G']
+
+    return "".join([random.choice(base_choices) for i in range(strand_length)])

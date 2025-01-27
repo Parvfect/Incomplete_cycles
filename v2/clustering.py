@@ -4,6 +4,8 @@
 import time
 import numpy as np
 import itertools
+from skbio.alignment import local_pairwise_align_ssw
+from skbio import DNA
 
 #===== assign numbers to shingles of each sequence=====#
 def kmerDNA(seq,k=3):
@@ -129,7 +131,6 @@ def lsh_cluster(seqs,m,k,k_lsh=2,ell_lsh=4):
     return clusters
 
 
-
 def filter_nonunique(seqs):
     # filter out sequences that appear many times
     d = {}
@@ -145,8 +146,48 @@ def filter_nonunique(seqs):
     return d,ctr
 
 
-def create_clusters(trimmed_seqs, TRIVIAL=True):
-    TRIVIAL = True # when real synthesized data is selected, set this flag to "True" (this dramatically reduces the runtime)
+def filter_lsh_clusters(clusters, reads):
+    clusts = [ [c] + list(set(clusters[c])) for c in clusters if len(clusters[c]) > 3 ]
+
+    #=====max matching=====# 
+    def max_match(seq1, seq2):
+        # This function checks whether seq1 and seq2 are similar or not
+        # Checking all pairs within a cluster dramatically increases the time complexity, 
+        # so by default, in the next cell, we call this function to only check the pairs
+        # that one of their members is the cluster center
+        
+        alignment, score, start_end_positions \
+            = local_pairwise_align_ssw(DNA(seq1) , DNA(seq2) , match_score=2,mismatch_score=-3)
+        a = str(alignment[0])
+        b = str(alignment[1])
+        ctr = 0
+        for i,j in zip(a,b):
+            if i==j:
+                ctr += 1
+        return ctr
+    
+    th = 35 # filtering threshold
+
+    k = len(clusts)
+    s = time.time()
+    fclusts = []
+    for i,c in enumerate(clusts):
+        cent = reads[c[0]]
+        cc = [c[0]]
+        for e in c[1:]:
+            score = max_match(cent,reads[e])
+            if score >= th:
+                cc += [e]
+        fclusts += [cc]
+        if i%1000 == 0:
+            print("%",round(i*100/len(clusts),2),"of the clusters are filtered.")
+    print("filtering time for",k,"clusters:",round(time.time()-s,2),"s")
+
+    return fclusts
+
+
+
+def create_clusters(trimmed_seqs, TRIVIAL=False):
 
     if TRIVIAL:
         start = time.time()
@@ -159,14 +200,24 @@ def create_clusters(trimmed_seqs, TRIVIAL=True):
         # set up the parameters and call the lsh_cluster function
         k_lsh = 4
         sim = 0.5
-        ell_lsh = int(1/(sim**k_lsh))
-        m,k=50,5
+        ell_lsh = int(1 / (sim ** k_lsh))
+        m, k = 50, 5
         start = time.time()
-        clusters = lsh_cluster(trimmed_seqs,m,k,k_lsh,ell_lsh)
+        clusters = lsh_cluster(trimmed_seqs, m , k, k_lsh, ell_lsh)
+        print(clusters)
         end = time.time()
 
         print("Runtime:",round(end-start,1),"s")
         print(len(clusters),"number of clusters created")
 
+        fclusts = filter_lsh_clusters(clusters=clusters, reads=trimmed_seqs)
+        print(fclusts)
 
-    return clusters
+
+    return fclusts
+
+"""
+Trivial clustering
+1. Looks at first 14 bases of the strand and puts unique one into a new cluster
+This is really really not good. But still does remarkably well. We need to try LSH Hashing.
+"""

@@ -25,9 +25,10 @@ parser.add_argument('--max_cluster_length', type=float, help="Maximum average le
 
 parser.add_argument('--badread_data', action='store_true', help="Badread data flag")
 parser.add_argument('--hpc', action='store_true', help="Running on HPC flag")
+parser.add_argument("--trivial", action="store_true", help="Use trivial clustering")
 
 parser.set_defaults(
-    reads_filepath=None, info_filepath=None, output_filepath=None, sampling_rate=1.0, hpc=False, badread_data_flag=False,
+    reads_filepath=None, info_filepath=None, output_filepath=None, sampling_rate=1.0, hpc=False, badread_data_flag=False, trivial=False,
     min_cluster_length=70, max_cluster_length=200)
 
 def get_run_information_from_files(info_filepath):
@@ -52,7 +53,7 @@ def extract_reads(reads_filepath, badread_data_flag=False, reverse_oriented=True
     return random.sample(sequenced_strands, int(len(sequenced_strands) * sampling_rate))
 
 def cluster_reads(sequenced_strands, original_strands=None, sampling_rate=1.0, hpc=False,
-                  min_cluster_length=70, max_cluster_length=200):
+                  min_cluster_length=70, max_cluster_length=200, trivial_clustering=False):
     """Conducts aligned clustering for a given read bunch and compared with the original strands"""
 
     if original_strands:
@@ -62,7 +63,8 @@ def cluster_reads(sequenced_strands, original_strands=None, sampling_rate=1.0, h
             multiple=True,
             running_on_hpc=hpc,
             min_cluster_length=min_cluster_length,
-            max_cluster_length=max_cluster_length
+            max_cluster_length=max_cluster_length,
+            trivial_clustering=trivial_clustering
         )
     else:
         recoveries = conduct_align_clustering(
@@ -108,8 +110,14 @@ if __name__ == '__main__':
     min_cluster_length = args.min_cluster_length
     max_cluster_length = args.max_cluster_length
     badread_data_flag = args.badread_data
+    trivial_clustering = args.trivial
     output_filepath = args.output_filepath
     hpc = args.hpc
+
+    print(f"Trivial clustering {trivial_clustering}")
+    print(f"Sampling rate {sampling_rate}")
+    print(f"Minimum cluster length {min_cluster_length}, Max cluster length {max_cluster_length}")
+    print(f"Badread data {badread_data_flag}")
 
     if output_filepath is None:
         output_filepath = info_filepath
@@ -125,7 +133,7 @@ if __name__ == '__main__':
         original_strand_ids, coupling_rates, capping_flags, original_strands = get_run_information_from_files(
             info_filepath=info_filepath)
         
-        print(f" {len(original_strands)} Unique reference strands loaded \n\n")
+        print(f"{len(original_strands)} Unique reference strands loaded \n")
 
     else:
         if not output_filepath:
@@ -137,7 +145,7 @@ if __name__ == '__main__':
     print(f"Number of strands in the pool = {len(sequenced_strands)}\n\n")
 
     recoveries = cluster_reads(sequenced_strands=sequenced_strands, original_strands=original_strands, sampling_rate=sampling_rate, hpc=hpc,
-                               min_cluster_length=min_cluster_length, max_cluster_length=max_cluster_length)
+                               min_cluster_length=min_cluster_length, max_cluster_length=max_cluster_length, trivial_clustering=trivial_clustering)
 
     print(recoveries)
 

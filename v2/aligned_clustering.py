@@ -103,7 +103,7 @@ def filter_sequences(trimmed_seqs, length_filtering, original_strand_length):
 
 
 def conduct_align_clustering(
-        trimmed_seqs, original_strand = None, trivial_clustering = True,
+        trimmed_seqs, original_strand = None, trivial_clustering = False,
         multiple = False, best_recovery = False, length_filtering = 0, running_on_hpc = False,
         min_cluster_length=50, max_cluster_length=200):
     
