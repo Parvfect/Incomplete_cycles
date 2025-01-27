@@ -4,3 +4,5 @@ numpy
 tqdm
 scikit-learn
 matplotlib
+scikit-bio
+nltk
