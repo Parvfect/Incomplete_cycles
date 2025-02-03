@@ -6,6 +6,11 @@ import numpy as np
 import itertools
 from skbio.alignment import local_pairwise_align_ssw
 from skbio import DNA
+from scipy.cluster.hierarchy import linkage, fcluster
+from collections import defaultdict
+from tqdm import tqdm
+import uuid
+
 
 #===== assign numbers to shingles of each sequence=====#
 def kmerDNA(seq,k=3):
@@ -110,24 +115,29 @@ def center_cluster(pairs):
     
         except StopIteration:
             hold = 1
-            print("clustering completed","---",pairsize,"pairs clustered")
+            #print("clustering completed","---",pairsize,"pairs clustered")
         if ell==ell_copy:
             t_counter += time.time()-s
         else:
-            print("Clustering time for LSH",ell_copy,":",t_counter,'\n')
+            #print("Clustering time for LSH",ell_copy,":",t_counter,'\n')
             t_counter = time.time()-s
             ell_copy = ell
+
+    return clusters  # Returns a list of limited clusters
  
-    return clusters
+
 
 #=====LSH clustering (main function)=====#
 def lsh_cluster(seqs,m,k,k_lsh=2,ell_lsh=4):
     # This is the main function
     maxsig = 4**k
     minhash = minhashsig(m,k)
-    sigs = [minhash.generate_signature(seq[:40]) for seq in seqs]
-    pairs = extract_similar_pairs(sigs,m,k_lsh,ell_lsh,maxsig)
-    clusters = center_cluster(pairs)
+    sigs = [minhash.generate_signature(seq[:190]) for seq in seqs]
+    
+    pairs = extract_similar_pairs(sigs ,m, k_lsh, ell_lsh, maxsig)
+    #clusters = center_cluster(pairs)
+    clusters = center_cluster(pairs=pairs)
+
     return clusters
 
 
@@ -166,7 +176,7 @@ def filter_lsh_clusters(clusters, reads):
                 ctr += 1
         return ctr
     
-    th = 35 # filtering threshold
+    th = 10 # filtering threshold
 
     k = len(clusts)
     s = time.time()
@@ -185,13 +195,10 @@ def filter_lsh_clusters(clusters, reads):
 
     return fclusts
 
-
-
-def create_clusters(trimmed_seqs, TRIVIAL=False):
+def create_clusters(trimmed_seqs, TRIVIAL=False, nbeg=14, target_clusters=None, m=10):
 
     if TRIVIAL:
         start = time.time()
-        nbeg = 14
         d,ctr = filter_nonunique([seq[:nbeg] for seq in trimmed_seqs])
         clusters = [d[a] for a in d if len(d[a]) > 3]
         end = time.time()
@@ -201,20 +208,22 @@ def create_clusters(trimmed_seqs, TRIVIAL=False):
         k_lsh = 4
         sim = 0.5
         ell_lsh = int(1 / (sim ** k_lsh))
-        m, k = 50, 5
+        k = 5
         start = time.time()
         clusters = lsh_cluster(trimmed_seqs, m , k, k_lsh, ell_lsh)
-        print(clusters)
+        print(f"Initial LSH clusters: {len(clusters)}")
+
         end = time.time()
 
         print("Runtime:",round(end-start,1),"s")
         print(len(clusters),"number of clusters created")
 
         fclusts = filter_lsh_clusters(clusters=clusters, reads=trimmed_seqs)
-        print(fclusts)
+        #print(fclusts)
 
-
-    return fclusts
+    
+    cluster_ids = [str(uuid.uuid4()) for i in range(len(fclusts))]
+    return fclusts, cluster_ids
 
 """
 Trivial clustering

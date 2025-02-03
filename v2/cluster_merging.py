@@ -20,6 +20,8 @@ def majority_merge(reads,weight = 0.4):
     for i in range(len(reads[0])):
         counts = {'A':0,'C':0,'G':0,'T':0,'-':0,'N':0}
         for j in range(len(reads)):
+            if i >= len(reads[j]):
+                continue
             counts[reads[j][i]] +=1
         counts['-'] *= weight
         mv = max(counts.items(), key=operator.itemgetter(1))[0]

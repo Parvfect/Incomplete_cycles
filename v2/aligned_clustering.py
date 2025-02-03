@@ -52,22 +52,24 @@ def multiple_alignment_muscle(cluster, out = False, running_on_hpc = False):
     return alignedcluster
 
 
-def align_clusters(trimmed_seqs, clusters, masize = 15, running_on_hpc = False, min_cluster_length = 70, max_cluster_length=160):
+def align_clusters(trimmed_seqs, clusters, masize = 15, running_on_hpc = False, min_cluster_length = 70, max_cluster_length=160, cluster_ids=None):
 
     fresults = []
+    candidate_cluster_ids = []
 
     # Collecting the clusters
     clusters_arr = [[trimmed_seqs[i] for i in clusterinds] for clusterinds in clusters]
 
     # Filtering the clusters based on the average strand length of the cluster
-    clusters_arr = [
-        i for i in clusters_arr if sum([len(j) for j in i]) / len(i) > min_cluster_length and sum([len(j) for j in i]) / len(i) < max_cluster_length]
+    #clusters_arr = [
+    #    i for i in clusters_arr if sum([len(j) for j in i]) / len(i) > min_cluster_length and sum([len(j) for j in i]) / len(i) < max_cluster_length]
     
     print(f"Number of clusters = {len(clusters_arr)}")
 
     for i in tqdm(range((len(clusters_arr)))):
 
         cluster = clusters_arr[i]
+        cluster_id = cluster_ids[i]
 
         if len(cluster) < 3:
             continue
@@ -79,13 +81,15 @@ def align_clusters(trimmed_seqs, clusters, masize = 15, running_on_hpc = False, 
 
                 if ma is not None:
                     fresults.append(ma)
+                    candidate_cluster_ids.append(cluster_id)
         else:
             ma = multiple_alignment_muscle(cluster[:masize], running_on_hpc=running_on_hpc)
 
             if ma is not None:
                 fresults.append(ma)
+                candidate_cluster_ids.append(cluster_id)
 
-    return fresults
+    return fresults, candidate_cluster_ids
 
 
 def get_recovery_percentage(consensus_strand: str, original_strand: str):
@@ -105,20 +109,23 @@ def filter_sequences(trimmed_seqs, length_filtering, original_strand_length):
 def conduct_align_clustering(
         trimmed_seqs, original_strand = None, trivial_clustering = False,
         multiple = False, best_recovery = False, length_filtering = 0, running_on_hpc = False,
-        min_cluster_length=50, max_cluster_length=200):
+        min_cluster_length=50, max_cluster_length=200, nbeg=14, multiple_align=True, target_clusters=None, m=10):
     
     if length_filtering:
         trimmed_seqs = filter_sequences(trimmed_seqs, length_filtering, len(original_strand))
 
-    clusters = create_clusters(
-        trimmed_seqs=trimmed_seqs, TRIVIAL=trivial_clustering)
+    clusters, cluster_ids = create_clusters(
+        trimmed_seqs=trimmed_seqs, TRIVIAL=trivial_clustering, nbeg=nbeg, target_clusters=target_clusters, m=10)
+    
+    #return clusters
 
-    fresults = align_clusters(
+    fresults, candidate_cluster_ids = align_clusters(
         trimmed_seqs=trimmed_seqs,
         clusters=clusters,
         running_on_hpc=running_on_hpc,
         min_cluster_length=min_cluster_length,
-        max_cluster_length=max_cluster_length
+        max_cluster_length=max_cluster_length,
+        cluster_ids=cluster_ids
     )
 
     candidates = merge_clusters(
@@ -126,8 +133,11 @@ def conduct_align_clustering(
     )
 
     if original_strand is None:
-        return {
-            "candidates": candidates
+        {
+            "candidates": candidates,
+            "candidate_cluster_ids": candidate_cluster_ids,
+            "cluster_ids": cluster_ids,
+            "clusters": clusters
         }
 
     if not multiple:
@@ -149,8 +159,8 @@ def conduct_align_clustering(
         return max(recoveries)
 
     return {
-        "candidates":candidates,
-        "recoveries": recoveries
+        "recoveries": recoveries,
+        "candidates": candidates
     }
     
 """

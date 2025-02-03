@@ -4,6 +4,7 @@ from seq_stat import align
 import pandas as pd
 import numpy as np
 import random
+import json
 
 
 def parse_biopython(input_fastq):
@@ -14,6 +15,9 @@ def parse_fastq_data(fastq_filepath):
     sequenced_strands = []
     for i, record in enumerate(parse_biopython(fastq_filepath)):
         sequenced_strands.append(record)
+
+def get_fastq_records(fastq_filepath):
+    return [record for record in parse_biopython(fastq_filepath)]
 
 def postprocess_badread_sequencing_data(fastq_filepath, synthesized_padded_dict=None, reverse_oriented=False, filter=False):
     """
@@ -129,3 +133,60 @@ def create_random_strand(strand_length):
     base_choices = ['A', 'C', 'T', 'G']
 
     return "".join([random.choice(base_choices) for i in range(strand_length)])
+
+
+def load_json_file(json_filepath):
+    with open(json_filepath, 'r') as f:
+        dict_ = json.load(f)
+    return dict_
+
+def get_badread_strand_id(record):
+    return record.description.split()[1].split(',')[0]
+
+
+
+def get_best_candidates_and_recoveries(original_strands, candidates):
+    """
+    For a given set of strands, finds the best candidates and returns a dictionary with
+    the recoveries, the number of fully recovered strands, the best set of candidates and the
+    original strands
+    """
+
+    fully_recovered_strands = 0
+    recoveries = []
+    partially_recovered_recoveries = []
+    best_candidates = []
+
+    for strand in tqdm(original_strands):
+        if strand in candidates:
+            fully_recovered_strands += 1
+            recoveries.append(1.0)
+            best_candidates.append(strand)
+        else:
+            best_recovery_within_candidates = 0.0
+            best_candidate = ""
+            for candidate in candidates:
+                strand_recovery = get_recovery_percentage(
+                    consensus_strand=candidate, original_strand=strand)
+
+                if strand_recovery > best_recovery_within_candidates:
+                    best_recovery_within_candidates = strand_recovery
+                    best_candidate = candidate
+
+            recoveries.append(best_recovery_within_candidates)
+            partially_recovered_recoveries.append(best_recovery_within_candidates)
+            best_candidates.append(best_candidate)
+
+    return {
+        "recoveries": recoveries,
+        "par"
+        "fully_recovered_strands": fully_recovered_strands,
+        "partially_recovered_recoveries": partially_recovered_recoveries,
+        "best_candidates": best_candidates,
+        "original_strands": original_strands
+    }
+
+
+def get_aligned_identity(seqA, seqB):
+    aligned, identity, indices = align(seqA, seqB)
+    return identity
