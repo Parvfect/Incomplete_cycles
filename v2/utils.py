@@ -1,10 +1,13 @@
 
-from Bio import SeqIO
+from Bio import SeqIO, Align
 from seq_stat import align
 import pandas as pd
 import numpy as np
 import random
 import json
+from tqdm import tqdm
+import Levenshtein
+import regex as re
 
 
 def parse_biopython(input_fastq):
@@ -144,7 +147,6 @@ def get_badread_strand_id(record):
     return record.description.split()[1].split(',')[0]
 
 
-
 def get_best_candidates_and_recoveries(original_strands, candidates):
     """
     For a given set of strands, finds the best candidates and returns a dictionary with
@@ -190,3 +192,66 @@ def get_best_candidates_and_recoveries(original_strands, candidates):
 def get_aligned_identity(seqA, seqB):
     aligned, identity, indices = align(seqA, seqB)
     return identity
+
+def count_ids_errors(str1, str2):
+    edit_operations = Levenshtein.editops(str1, str2)
+    
+    insertions = sum(1 for op in edit_operations if op[0] == 'insert')
+    deletions = sum(1 for op in edit_operations if op[0] == 'delete')
+    substitutions = sum(1 for op in edit_operations if op[0] == 'replace')
+
+    return {'Insertions': insertions, 'Deletions': deletions, 'Substitutions': substitutions}
+
+
+def align(seqA, seqB, identity=True):
+    """
+    Performs pairwise sequence alignment between two sequences.
+
+    Args:
+        seqA (str): The first sequence to be aligned.
+        seqB (str): The second sequence to be aligned.
+
+    Returns:
+        tuple: A tuple containing the aligned sequences (target and query).
+    """
+    # Initialize the PairwiseAligner object
+    aligner = Align.PairwiseAligner()
+    
+    # Set alignment mode to global
+    aligner.mode = "local"
+    
+    # Set match, mismatch, and gap scores
+    aligner.match_score = 2
+    aligner.mismatch_score = -1
+    aligner.gap_score = -5
+    aligner.open_gap_score = -0.5
+    aligner.extend_gap_score = -0.1
+    
+    # Perform sequence alignment and get the first (best) alignment
+    alignment = aligner.align(seqA, seqB)[0]
+
+    # Get alignment as lines
+    alignment_lines = alignment.format().strip().split("\n")
+
+    target_starting_index, target_ending_index = 0, 0
+        
+    # Regex pattern
+    pattern = re.compile(r'[0-9\s]')
+
+    # Extract the target sequence
+    target_line = "".join([line.split("target")[1] for line in alignment_lines if line.strip().startswith("target")])
+    target = re.sub(pattern, "", target_line)
+    
+
+    # Extract the query sequence
+    query_line = "".join([line.split("query")[1] for line in alignment_lines if line.strip().startswith("query")])
+    query = re.sub(pattern, "", query_line)
+    identities = alignment.counts()[1]
+    mismatches = alignment.counts()[2]
+    length = alignment.length
+
+    if identity:
+        return identities/length
+
+    #return (alignment.format(), target, query, identities, mismatches, length)
+    return alignment
