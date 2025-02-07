@@ -33,6 +33,8 @@ def update_distance_matrix(
         added_strand: str, cluster_strands: list[str], distance_matrix: np.ndarray):
     """Adds the distances of the added strand to the cluster distance matrix"""
 
+    # List of lists. keep going till next. if sum < main centroids, start going to next hmm
+
     new_strand_index = len(cluster_strands)
     for ind, cluster_strand in enumerate(cluster_strands):
         distance_matrix[ind, new_strand_index] = distance_matrix[new_strand_index, ind] = distance(added_strand, cluster_strand)
@@ -52,6 +54,8 @@ def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=True, a
     if use_centroids:
         distance_matrices = []
 
+    print(f"Total strands {len(strand_pool)}")
+
     for ind, strand in tqdm(enumerate(strand_pool)):
 
         for cluster_ind, centroid in enumerate(centroids):
@@ -64,6 +68,9 @@ def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=True, a
                 clusters_by_index[cluster_ind].append(ind)
                 
                 if use_centroids:
+                    
+                    # Okay so I need to pairwise check against each element until the edit distance sum surpasses the previous centroid's. If so, then I store it as much as the previous centroid + an arbitary value more / I have some flag that needs to compute the edit distances of the remaining - could be a matrice thing cause I go iteratively. If its None I suppose
+
                     # Update cluster distance matrix
                     distance_matrices[cluster_ind] = update_distance_matrix(added_strand=strand, cluster_strands=clusters_by_strand[cluster_ind], distance_matrix=distance_matrices[cluster_ind])
                     
