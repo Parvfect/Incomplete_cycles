@@ -6,3 +6,4 @@ scikit-learn
 matplotlib
 scikit-bio
 nltk
+Levenshtein

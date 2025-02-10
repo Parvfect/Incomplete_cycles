@@ -6,6 +6,7 @@ from cluster_merging import majority_merge
 import random
 import numpy as np
 
+
 def get_edit_distance_matrix(strands):
     """
     Returns the edit distance matrix for the strands
@@ -42,7 +43,8 @@ def update_distance_matrix(
     return distance_matrix
 
 
-def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=True, analysis=False):
+def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=False, analysis=False,
+                    sort_order=True):
     """
     Can be improved by doing centroids of the cluster rather than originating string
     """
@@ -51,12 +53,14 @@ def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=True, a
     centroids = []
     within_clusters = False
 
+    #similarity_threshold = (1 - similarity_threshold) * 100
+
     if use_centroids:
         distance_matrices = []
 
     print(f"Total strands {len(strand_pool)}")
 
-    for ind, strand in tqdm(enumerate(strand_pool)):
+    for ind, strand in enumerate(tqdm(strand_pool)):
 
         for cluster_ind, centroid in enumerate(centroids):
             
@@ -91,9 +95,22 @@ def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=True, a
 
         within_clusters = False
 
+        if sort_order:
+            if ind % 100 == 0:
+                # Sorting clusters by size
+                # Sort based on the length of sublists in list1
+                clusters_by_strand, clusters_by_index, centroids = zip(*sorted(zip(clusters_by_strand, clusters_by_index, centroids), key=lambda x: len(x[0]), reverse=True))
+
+                # Convert back to lists
+                clusters_by_strand = list(clusters_by_strand)
+                clusters_by_index = list(clusters_by_index)
+                centroids = list(centroids)
+        
     if analysis:
         return clusters_by_index, centroids, distance_matrices
     
+    
+
     return clusters_by_index, centroids
                     
 

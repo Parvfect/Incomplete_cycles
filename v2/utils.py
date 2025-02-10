@@ -8,6 +8,7 @@ import json
 from tqdm import tqdm
 import Levenshtein
 import regex as re
+import matplotlib.pyplot as plt
 
 
 def parse_biopython(input_fastq):
@@ -27,33 +28,9 @@ def postprocess_badread_sequencing_data(fastq_filepath, synthesized_padded_dict=
     The record description contains the strand starting, ending and orientation
     """
     sequenced_strands = []
-    for i, record in enumerate(parse_biopython(fastq_filepath)):
+    for i, record in enumerate(tqdm(parse_biopython(fastq_filepath))):
         strand = str(record.seq)
         # Correcting orientation if it is wrong
-        if reverse_oriented:
-            try:
-                orientation = record.description.split()[1].split(',')[2]
-                if orientation == '-strand':
-                    strand = strand[::-1]
-            except:
-                continue
-
-        # Aligning to the target strand if we are filtering        
-        if filter:
-            try:
-                strand_id = record.description.split()[1].split(',')[0]
-                if strand_id in synthesized_padded_dict.keys():
-                        target_strand = synthesized_padded_dict[strand_id]
-                else:
-                    continue
-
-                aligned, identity, indices = align(target_strand, strand)
-
-                if identity > 0.7:
-                    sequenced_strands.append(strand)
-            except:
-                continue
-
         sequenced_strands.append(strand)
 
     return sequenced_strands
@@ -255,3 +232,11 @@ def align(seqA, seqB, identity=True):
 
     #return (alignment.format(), target, query, identities, mismatches, length)
     return alignment
+
+def len_histogram(arr: list[list]):
+    plt.hist([len(i) for i in arr])
+    plt.show()
+
+def get_sort_by_sublists_length(main_list):
+    # Get sorted indices based on the length of sublists in descending order
+    return sorted(range(len(main_list)), key=lambda i: len(main_list[i]), reverse=True)
