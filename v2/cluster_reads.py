@@ -1,5 +1,5 @@
 
-from aligned_clustering import conduct_align_clustering
+#from aligned_clustering import conduct_align_clustering
 from heirarchal_clustering import cluster_trivial
 from utils import get_original_strands, postprocess_badread_sequencing_data, post_process_results, read_fasta_data
 import argparse
