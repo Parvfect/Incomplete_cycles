@@ -86,10 +86,10 @@ def cluster_reads(sequenced_strands, original_strands=None, similarity_threshold
     return {"centroids": centroids, "cluster_inds": cluster_inds}
 
 def create_clustering_report_file(
-        recoveries, output_filepath, original_strands=None, coupling_rates=None, capping_flags=None):
+        recoveries, output_filepath, original_strands=None, coupling_rates=None, capping_flags=None, similarity_threshold=0.8):
 
     uid = str(uuid.uuid4())
-    timestamp = str(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H_%M_%S'))
+    timestamp = str(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H_%M_%S')) +f"_{similarity_threshold}"
     save_path = os.path.join(output_filepath, timestamp)
 
     os.mkdir(save_path) # Timestamp make results directory
@@ -125,8 +125,10 @@ if __name__ == '__main__':
 
     print(f"Trivial clustering {trivial_clustering}")
     print(f"Sampling rate {sampling_rate}")
-    print(f"Minimum cluster length {min_cluster_length}, Max cluster length {max_cluster_length}")
+    print(f"Similarity threshold {similarity_threshold}")
+    #print(f"Minimum cluster length {min_cluster_length}, Max cluster length {max_cluster_length}")
     print(f"Badread data {badread_data_flag}")
+
 
     if output_filepath is None:
         output_filepath = info_filepath
@@ -158,8 +160,8 @@ if __name__ == '__main__':
                                min_cluster_length=min_cluster_length, max_cluster_length=max_cluster_length, trivial_clustering=trivial_clustering)
 
     if not info_filepath:
-        create_clustering_report_file(recoveries=recoveries, output_filepath=output_filepath)
+        create_clustering_report_file(recoveries=recoveries, output_filepath=output_filepath, similarity_threshold=similarity_threshold)
     else:
         create_clustering_report_file(recoveries=recoveries, output_filepath=output_filepath,
                                   original_strands=original_strands, coupling_rates=coupling_rates,
-                                  capping_flags=capping_flags)
+                                  capping_flags=capping_flags, similarity_threshold=similarity_threshold)

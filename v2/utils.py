@@ -158,7 +158,6 @@ def get_best_candidates_and_recoveries(original_strands, candidates):
 
     return {
         "recoveries": recoveries,
-        "par"
         "fully_recovered_strands": fully_recovered_strands,
         "partially_recovered_recoveries": partially_recovered_recoveries,
         "best_candidates": best_candidates,
