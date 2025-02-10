@@ -1,7 +1,7 @@
 
 from Levenshtein import ratio, distance
 from tqdm import tqdm
-from aligned_clustering import multiple_alignment_muscle
+#from aligned_clustering import multiple_alignment_muscle
 from cluster_merging import majority_merge
 import random
 import numpy as np
@@ -113,7 +113,8 @@ def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=False, 
 
     return clusters_by_index, centroids
                     
-
+"""
 def make_prediction(cluster, sample_size=5):
     cluster = random.sample(cluster, sample_size)
     return majority_merge(multiple_alignment_muscle(cluster))
+"""
