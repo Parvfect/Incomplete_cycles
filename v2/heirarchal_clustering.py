@@ -1,11 +1,11 @@
 
 from Levenshtein import ratio, distance
 from tqdm import tqdm
-#from aligned_clustering import multiple_alignment_muscle
+from aligned_clustering import multiple_alignment_muscle
 from cluster_merging import majority_merge
 import random
 import numpy as np
-
+from utils import get_recovery_percentage, reverse_complement
 
 def get_edit_distance_matrix(strands):
     """
@@ -16,7 +16,7 @@ def get_edit_distance_matrix(strands):
     edit_distance_matrix = np.zeros([n_strands, n_strands])
     for i in range(n_strands - 1):
         for j in range(i + 1, n_strands):
-            edit_distance_matrix[i,j] = edit_distance_matrix[j, i] = ratio(strands[i], strands[j])
+            edit_distance_matrix[i,j] = edit_distance_matrix[j, i] = distance(strands[i], strands[j])
 
     return edit_distance_matrix
 
@@ -43,7 +43,7 @@ def update_distance_matrix(
     return distance_matrix
 
 
-def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=False, analysis=False,
+def cluster_trivial(strand_pool, distance_threshold=40, similarity_threshold=0.85, use_centroids=False, analysis=False,
                     sort_order=True):
     """
     Can be improved by doing centroids of the cluster rather than originating string
@@ -53,8 +53,6 @@ def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=False, 
     centroids = []
     within_clusters = False
 
-    #similarity_threshold = (1 - similarity_threshold) * 100
-
     if use_centroids:
         distance_matrices = []
 
@@ -62,17 +60,26 @@ def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=False, 
 
     for ind, strand in enumerate(tqdm(strand_pool)):
 
+        within_clusters = False
+        rev_strand = reverse_complement(strand)
         for cluster_ind, centroid in enumerate(centroids):
             
             # If it is greater than or equal to the similarity threshold
-            if ratio(centroid, strand) >= similarity_threshold:
-                
+            if distance(centroid, strand) <= distance_threshold:
+                within_clusters = True
+            elif distance(centroid, rev_strand) <= distance_threshold:
+                within_clusters = True
+                strand = rev_strand
+
+            #if ratio(centroid, strand) >= similarity_threshold:# or ratio(centroid, rev_strand) >= similarity_threshold:
+            #if distance.Levenshtein.distance(centroid, strand) < similarity_threshold:
+            #if get_recovery_percentage(centroid[:14], strand[:14]) >= similarity_threshold:
+            if within_clusters:            
                 # Add to the cluster
-                clusters_by_strand[cluster_ind].append(strand)
                 clusters_by_index[cluster_ind].append(ind)
-                
+                clusters_by_strand[cluster_ind].append(strand)
+
                 if use_centroids:
-                    
                     # Okay so I need to pairwise check against each element until the edit distance sum surpasses the previous centroid's. If so, then I store it as much as the previous centroid + an arbitary value more / I have some flag that needs to compute the edit distances of the remaining - could be a matrice thing cause I go iteratively. If its None I suppose
 
                     # Update cluster distance matrix
@@ -80,20 +87,17 @@ def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=False, 
                     
                     # Update centroid
                     centroids[cluster_ind] = calculate_centroid(strands=clusters_by_strand[cluster_ind], edit_distance_matrix=distance_matrices[cluster_ind])
-
-                within_clusters = True
                 break
             
         if not within_clusters:
-            clusters_by_strand.append([strand])
+            
             clusters_by_index.append([ind])
             centroids.append(strand)
+            clusters_by_strand.append([strand])
 
             if use_centroids:
                 # Create new edit distance matrice to compute the centroid
                 distance_matrices.append(np.zeros([1000, 1000]))
-
-        within_clusters = False
 
         if sort_order:
             if ind % 100 == 0:
@@ -105,16 +109,16 @@ def cluster_trivial(strand_pool, similarity_threshold=0.8, use_centroids=False, 
                 clusters_by_strand = list(clusters_by_strand)
                 clusters_by_index = list(clusters_by_index)
                 centroids = list(centroids)
-        
+                
     if analysis:
         return clusters_by_index, centroids, distance_matrices
     
     
+    print(f"Number of clusters = {len(centroids)}")
 
-    return clusters_by_index, centroids
+    return clusters_by_index, clusters_by_strand, centroids
                     
-"""
+
 def make_prediction(cluster, sample_size=5):
     cluster = random.sample(cluster, sample_size)
     return majority_merge(multiple_alignment_muscle(cluster))
-"""

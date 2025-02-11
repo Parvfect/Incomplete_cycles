@@ -1,5 +1,5 @@
 
-from utils import get_recovery_percentage
+from utils import get_recovery_percentage, reverse_complement
 
 def get_kmers(seq, k):
     return [seq[i:i+k] for i in range(len(seq) - k + 1)]
@@ -43,3 +43,37 @@ def undress_strand(seq, starting_adapter, ending_adapter, len_original, original
             return seq_
         else:
             print(rec)
+
+
+class FiniteStateMachine():
+    """Not really, but I like the concept"""
+
+    def __init__(self, original_strands):
+        self.original_strands = original_strands
+        self.n = len(original_strands)
+
+    def operate(self, guesses, hard=False, reversals=False):
+        """Non ordering checks for fsm"""
+
+        assert len(guesses) == self.n
+        
+        found = 0
+        for i in self.original_strands:
+            if i in guesses:
+                found += 1
+                continue
+            if reversals:
+                if reverse_complement(i) in guesses:
+                    found += 1
+        
+        if found == self.n:
+            print("Found all")
+            return True
+
+        if hard:
+            return False
+
+        else:
+            print(f"Found {found}")
+            return False
+        
