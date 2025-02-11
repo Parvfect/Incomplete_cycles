@@ -6,19 +6,18 @@ import numpy as np
 import random
 import json
 from tqdm import tqdm
-import Levenshtein
+from Levenshtein import distance
 import regex as re
 import matplotlib.pyplot as plt
 
 
+def reverse_complement(dna: str) -> str:
+    complement = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
+    return ''.join(complement[base] for base in reversed(dna))
+
 def parse_biopython(input_fastq):
     for record in SeqIO.parse(input_fastq, 'fastq'):
         yield record
-
-def parse_fastq_data(fastq_filepath):
-    sequenced_strands = []
-    for i, record in enumerate(parse_biopython(fastq_filepath)):
-        sequenced_strands.append(record)
 
 def get_fastq_records(fastq_filepath):
     return [record for record in parse_biopython(fastq_filepath)]
@@ -26,14 +25,24 @@ def get_fastq_records(fastq_filepath):
 def postprocess_badread_sequencing_data(fastq_filepath, synthesized_padded_dict=None, reverse_oriented=False, filter=False):
     """
     The record description contains the strand starting, ending and orientation
+    Returns strands and records (unchanged)
     """
-    sequenced_strands = []
+    records = []
     for i, record in enumerate(tqdm(parse_biopython(fastq_filepath))):
-        strand = str(record.seq)
+        
+        """
         # Correcting orientation if it is wrong
-        sequenced_strands.append(strand)
+        if reverse_oriented:
+            try:
+                orientation = record.description.split()[1].split(',')[1]
+                if orientation == '-strand':
+                    strand = reverse_complement(strand)
+            except:
+                continue
+        """
+        records.append(record)
 
-    return sequenced_strands
+    return records
 
 def post_process_results(recoveries_strands, capping_flags, coupling_rates):
 
@@ -67,8 +76,10 @@ def read_synthesized_strands_from_file(file_path, ids=False):
     
     return sequences
 
-def read_fasta_data(fasta_filepath):
-    sequences = read_synthesized_strands_from_file(fasta_filepath, ids=False)
+def read_fasta_data(fasta_filepath, ids=False):
+    if ids:
+        sequences, ids = read_synthesized_strands_from_file(fasta_filepath, ids=ids)
+    sequences = read_synthesized_strands_from_file(fasta_filepath, ids=ids)
     return sequences
 
 def get_original_strands(original_strand_filepath, plain=False):
@@ -239,3 +250,54 @@ def len_histogram(arr: list[list]):
 def get_sort_by_sublists_length(main_list):
     # Get sorted indices based on the length of sublists in descending order
     return sorted(range(len(main_list)), key=lambda i: len(main_list[i]), reverse=True)
+
+
+def get_sample_statistics(records, original_strands, distance_threshold=10, reference=False):
+    """
+    Given a sample of the data, I want to get the following
+    1. Number of strands that don't match to shit
+    2. Average number of unique matches per strand
+    3. Std number of unique matches per strand
+    3. Total number of good strands
+    """
+
+    strands_by_index = np.zeros(len(original_strands))
+    reverse_strands = 0
+    straight_strands = 0
+    unmatched = 0
+    
+    for record in tqdm(records):
+
+        if reference:
+            try:
+                strand_id = get_badread_strand_id(record)
+                #synthesized_id = strand_ids_synthesized[strand_id]
+                #index = original_strand_ids.index(synthesized_id)
+                #index = original_strand_ids[strand_ids_synthesized[utils.get_badread_strand_id(record)]]
+            except:
+                continue
+
+        seq = str(record.seq)
+        revseq = str(reverse_complement(seq))
+
+        found_flag = False
+        for ind, strand in enumerate(original_strands):
+            if distance(seq, strand) <= distance_threshold:
+                strands_by_index[ind] += 1
+                straight_strands += 1
+                found_flag = True
+            elif distance(revseq, strand) <= distance_threshold:
+                strands_by_index[ind] += 1
+                reverse_strands += 1
+                found_flag = True
+        
+        if not found_flag:
+            unmatched += 1
+
+    return {
+        'distance_threshold': distance_threshold,
+        'strands_by_index': strands_by_index,
+        'n_straight': straight_strands,
+        'n_reverse': reverse_strands,
+        'unmatched': unmatched
+    }
