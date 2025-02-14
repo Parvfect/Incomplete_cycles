@@ -5,7 +5,9 @@ from aligned_clustering import multiple_alignment_muscle
 from cluster_merging import majority_merge
 import random
 import numpy as np
-from utils import get_recovery_percentage, reverse_complement
+from utils import get_recovery_percentage, reverse_complement, get_sort_by_sublists_length
+from typing import List, Tuple
+
 
 def get_edit_distance_matrix(strands):
     """
@@ -43,82 +45,75 @@ def update_distance_matrix(
     return distance_matrix
 
 
-def cluster_trivial(strand_pool, distance_threshold=40, similarity_threshold=0.85, use_centroids=False, analysis=False,
-                    sort_order=True):
+def cluster_strands(strand_pool: List[str], distance_threshold: int = 40, use_centroids: bool = False,
+                    sort_order: bool = True) -> Tuple[List[List[int]], List[bool], List[str]]:
     """
-    Can be improved by doing centroids of the cluster rather than originating string
+    Agglomeratively cluster strands using the Levenshtien distance.
+
+    Args:
+        strand_pool: List of the strands in the pool to be clustered
+        distance_threshold: Threshold for edit distance to cluster similar strands together
+        use_centroids: Calculate and update centroids while clustering
+        sort_order: Sort from largest to smallest cluster every 100 iterations
+    Returns:
+        clusters: List of clusters. Each indice within the cluster is a tuple of the strand 
+        indice from the pool and a boolean value representing whether it was reverse complemented or not.
+        cluster_heads: The representative strand for each cluster. If using centroids, this becomes the centroid.
     """
-    clusters_by_strand = []
-    clusters_by_index = []
-    centroids = []
-    within_clusters = False
 
     if use_centroids:
-        distance_matrices = []
+        print("This feature is not implemented yet!")
+        return
+
+    clusters = []
+    cluster_heads = []
+    reversed_markers = np.zeros(len(strand_pool), dtype=bool)
+    within_clusters = False
 
     print(f"Total strands {len(strand_pool)}")
 
     for ind, strand in enumerate(tqdm(strand_pool)):
 
         within_clusters = False
+        reversed_flag = False
         rev_strand = reverse_complement(strand)
-        for cluster_ind, centroid in enumerate(centroids):
+        
+        for cluster_ind, cluster_head in enumerate(cluster_heads):
             
-            # If it is greater than or equal to the similarity threshold
-            if distance(centroid, strand) <= distance_threshold:
+            if distance(cluster_head, strand) <= distance_threshold:
                 within_clusters = True
-            elif distance(centroid, rev_strand) <= distance_threshold:
-                within_clusters = True
-                strand = rev_strand
-
-            #if ratio(centroid, strand) >= similarity_threshold:# or ratio(centroid, rev_strand) >= similarity_threshold:
-            #if distance.Levenshtein.distance(centroid, strand) < similarity_threshold:
-            #if get_recovery_percentage(centroid[:14], strand[:14]) >= similarity_threshold:
-            if within_clusters:            
-                # Add to the cluster
-                clusters_by_index[cluster_ind].append(ind)
-                clusters_by_strand[cluster_ind].append(strand)
-
-                if use_centroids:
-                    # Okay so I need to pairwise check against each element until the edit distance sum surpasses the previous centroid's. If so, then I store it as much as the previous centroid + an arbitary value more / I have some flag that needs to compute the edit distances of the remaining - could be a matrice thing cause I go iteratively. If its None I suppose
-
-                    # Update cluster distance matrix
-                    distance_matrices[cluster_ind] = update_distance_matrix(added_strand=strand, cluster_strands=clusters_by_strand[cluster_ind], distance_matrix=distance_matrices[cluster_ind])
-                    
-                    # Update centroid
-                    centroids[cluster_ind] = calculate_centroid(strands=clusters_by_strand[cluster_ind], edit_distance_matrix=distance_matrices[cluster_ind])
                 break
+
+            elif distance(cluster_head, rev_strand) <= distance_threshold:
+                within_clusters = True
+                reversed_flag = True
+                break
+
+        if within_clusters:            
+            clusters[cluster_ind].append(ind)
             
         if not within_clusters:
-            
-            clusters_by_index.append([ind])
-            centroids.append(strand)
-            clusters_by_strand.append([strand])
+            clusters.append([ind])
+            cluster_heads.append(strand)
 
-            if use_centroids:
-                # Create new edit distance matrice to compute the centroid
-                distance_matrices.append(np.zeros([1000, 1000]))
+        if reversed_flag:
+            reversed_markers[ind] = reversed_flag
 
         if sort_order:
             if ind % 100 == 0:
-                # Sorting clusters by size
-                # Sort based on the length of sublists in list1
-                clusters_by_strand, clusters_by_index, centroids = zip(*sorted(zip(clusters_by_strand, clusters_by_index, centroids), key=lambda x: len(x[0]), reverse=True))
+                clusters, cluster_heads = zip(*sorted(
+                    zip(clusters, cluster_heads), key=lambda x: len(x[0]), reverse=True))
 
-                # Convert back to lists
-                clusters_by_strand = list(clusters_by_strand)
-                clusters_by_index = list(clusters_by_index)
-                centroids = list(centroids)
+                clusters = list(clusters)
+                cluster_heads = list(cluster_heads)
                 
-    if analysis:
-        return clusters_by_index, centroids, distance_matrices
     
-    
-    print(f"Number of clusters = {len(centroids)}")
+    print(f"Number of clusters = {len(cluster_heads)}")
 
-    return clusters_by_index, clusters_by_strand, centroids
+    return clusters, reversed_markers, cluster_heads
                     
 
 def make_prediction(cluster, sample_size=5):
     cluster = random.sample(cluster, sample_size)
     return majority_merge(multiple_alignment_muscle(cluster))
+

@@ -252,7 +252,7 @@ def get_sort_by_sublists_length(main_list):
     return sorted(range(len(main_list)), key=lambda i: len(main_list[i]), reverse=True)
 
 
-def get_sample_statistics(records, original_strands, distance_threshold=10, reference=False):
+def get_sample_statistics(records, strand_ids, original_strands, original_strand_ids=None, distance_threshold=10, reference=False):
     """
     Given a sample of the data, I want to get the following
     1. Number of strands that don't match to shit
@@ -266,30 +266,45 @@ def get_sample_statistics(records, original_strands, distance_threshold=10, refe
     straight_strands = 0
     unmatched = 0
     
-    for record in tqdm(records):
+    for read, strand_id in tqdm(zip(records, strand_ids), total=len(records)):
+
+        #seq = str(record.seq)
+        seq = read
+        revseq = str(reverse_complement(seq))
+        found_flag = False
 
         if reference:
             try:
-                strand_id = get_badread_strand_id(record)
+                #strand_id = get_badread_strand_id(record)
                 #synthesized_id = strand_ids_synthesized[strand_id]
                 #index = original_strand_ids.index(synthesized_id)
-                #index = original_strand_ids[strand_ids_synthesized[utils.get_badread_strand_id(record)]]
+                index = original_strand_ids.index(strand_id)
+                strand = original_strands[index]
+
+                if distance(seq, strand) <= distance_threshold:
+                    strands_by_index[index] += 1
+                    straight_strands += 1
+                    found_flag = True
+
+                elif distance(revseq, strand) <= distance_threshold:
+                    strands_by_index[index] += 1
+                    reverse_strands += 1
+                    found_flag = True
+
             except:
                 continue
 
-        seq = str(record.seq)
-        revseq = str(reverse_complement(seq))
-
-        found_flag = False
-        for ind, strand in enumerate(original_strands):
-            if distance(seq, strand) <= distance_threshold:
-                strands_by_index[ind] += 1
-                straight_strands += 1
-                found_flag = True
-            elif distance(revseq, strand) <= distance_threshold:
-                strands_by_index[ind] += 1
-                reverse_strands += 1
-                found_flag = True
+        
+        else:
+            for ind, strand in enumerate(original_strands):
+                if distance(seq, strand) <= distance_threshold:
+                    strands_by_index[ind] += 1
+                    straight_strands += 1
+                    found_flag = True
+                elif distance(revseq, strand) <= distance_threshold:
+                    strands_by_index[ind] += 1
+                    reverse_strands += 1
+                    found_flag = True
         
         if not found_flag:
             unmatched += 1
@@ -297,7 +312,39 @@ def get_sample_statistics(records, original_strands, distance_threshold=10, refe
     return {
         'distance_threshold': distance_threshold,
         'strands_by_index': strands_by_index,
+        'mean_strands_per_index': float(np.mean(strands_by_index)),
+        'std_strands_per_index': float(np.std(strands_by_index)),
+        'unique_matches': sum([1 for i in strands_by_index if i>0]),
         'n_straight': straight_strands,
         'n_reverse': reverse_strands,
         'unmatched': unmatched
     }
+
+
+
+def sample_reads(reads, ids, sampling_rate=None, n_samples=1000):
+    """
+    Sample reads and ids """
+
+    if sampling_rate:
+        n_samples = int(len(reads) * sampling_rate)
+
+    sample_indices = [random.randint(0, len(reads)) for i in range(n_samples)]
+    sampled_reads = [reads[i] for i in sample_indices]
+    sampled_ids = [ids[i] for i in sample_indices]
+
+    return sampled_reads, sampled_ids
+
+def sort_clusters(clusters, clustered_seqs, centroids):
+    
+    sort_indices = get_sort_by_sublists_length(clusters)
+
+    sorted_clusters = [clusters[i] for i in sort_indices]
+    sorted_centroids = [centroids[i] for i in sort_indices]
+    sorted_clustered_seqs = [clustered_seqs[i] for i in sort_indices]
+
+    centroids = sorted_centroids
+    clusters = sorted_clusters
+    clustered_seqs = sorted_clustered_seqs
+
+    return clusters, clustered_seqs, centroids
