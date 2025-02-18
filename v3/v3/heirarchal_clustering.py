@@ -5,7 +5,7 @@ from strand_reconstruction import multiple_alignment_muscle, majority_merge
 import random
 import numpy as np
 from utils import get_recovery_percentage, reverse_complement, get_sort_by_sublists_length
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 
 def get_edit_distance_matrix(strands):
@@ -45,7 +45,7 @@ def update_distance_matrix(
 
 
 def cluster_strands(strand_pool: List[str], distance_threshold: int = 40, use_centroids: bool = False,
-                    sort_order: bool = True) -> Tuple[List[List[int]], List[bool], List[str]]:
+                    sort_order: bool = True) -> Dict[str, List]:
     """
     Agglomeratively cluster strands using the Levenshtien distance.
 
@@ -55,9 +55,9 @@ def cluster_strands(strand_pool: List[str], distance_threshold: int = 40, use_ce
         use_centroids: Calculate and update centroids while clustering
         sort_order: Sort from largest to smallest cluster every 100 iterations
     Returns:
-        clusters: List of clusters. Indices of the strand in each cluster.
+        clusters: List of clusters with indices of the strand in each cluster
         reversed_markers: boolean list of whether a strand is reversed or not
-        cluster_heads: The representative strand for each cluster. If using centroids, this becomes the centroid.
+        cluster_heads: The representative strand for each cluster. If using centroids, this becomes the centroid
     """
 
     if use_centroids:
@@ -66,7 +66,8 @@ def cluster_strands(strand_pool: List[str], distance_threshold: int = 40, use_ce
 
     clusters = []
     cluster_heads = []
-    reversed_markers = np.zeros(len(strand_pool), dtype=bool)
+    n_strands_pool = len(strand_pool)
+    reversed_markers = np.zeros(n_strands_pool, dtype=bool)
     within_clusters = False
 
     print(f"Total strands {len(strand_pool)}")
@@ -99,7 +100,7 @@ def cluster_strands(strand_pool: List[str], distance_threshold: int = 40, use_ce
             reversed_markers[ind] = reversed_flag
 
         if sort_order:
-            if ind % 100 == 0:
+            if ind % 100 == 0 or ind == (n_strands_pool - 1):
                 clusters, cluster_heads = zip(*sorted(
                     zip(clusters, cluster_heads), key=lambda x: len(x[0]), reverse=True))
 
@@ -109,8 +110,12 @@ def cluster_strands(strand_pool: List[str], distance_threshold: int = 40, use_ce
     
     print(f"Number of clusters = {len(cluster_heads)}")
 
-    return clusters, reversed_markers, cluster_heads
-                
+    return {
+        "clusters": clusters,
+        "reversed_markers": reversed_markers,
+        "cluster_heads": cluster_heads
+    }
+           
 def make_prediction(cluster, sample_size=5):
     cluster = random.sample(cluster, sample_size)
     return majority_merge(multiple_alignment_muscle(cluster))

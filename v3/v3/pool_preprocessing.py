@@ -1,6 +1,7 @@
 
 from tqdm import tqdm
 
+
 def get_kmers(seq, k):
     return [seq[i:i+k] for i in range(len(seq) - k + 1)]
 
