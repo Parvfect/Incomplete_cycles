@@ -30,13 +30,16 @@ class Clustering:
                 
         strand_pool = [self.strand_pool[ind] for ind in filtered_indices]
         self.strand_pool = strand_pool
+
+        print(
+            f"{(self.n_strands_pool - len(self.strand_pool))/ self.n_strands_pool} strands filtered out")
         self.n_strands_pool = len(self.strand_pool)
         
         if ids:
             strand_pool_ids = [self.strand_pool_ids[ind] for ind in filtered_indices]
             self.strand_pool_ids = strand_pool_ids
 
-            return self.strand_pool, self.ids
+            return self.strand_pool, self.strand_pool_ids
         
         return self.strand_pool
     
@@ -59,17 +62,18 @@ class Clustering:
                 strand_pool=strand_pool, distance_threshold=distance_threshold)
         else:
             cluster_dict = cluster_strands(
-                strand_pool=self.strand_pool, distance_threshold=distance_threshold)            
+                strand_pool=self.strand_pool, distance_threshold=distance_threshold)
+            strand_pool = self.strand_pool            
 
-        self.clusters = self.cluster_dict['clusters']
-        self.reversed_markers = self.cluster_dict['reversed_markers']
-        self.cluster_heads = self.cluster_dict['cluster_heads']
+        self.clusters = cluster_dict['clusters']
+        self.reversed_markers = cluster_dict['reversed_markers']
+        self.cluster_heads = cluster_dict['cluster_heads']
 
         assert [len(self.clusters[i]) > len(self.clusters[i + 1]) for i in range(len(self.clusters) - 1)]
         print("Clusters are sorted")
         
         self.clustered_seqs = get_clustered_seqs(
-            clusters=self.clusters, reversed_markers=self.reversed_markers, strand_pool=self.strand_pool)
+            clusters=self.clusters, reversed_markers=self.reversed_markers, strand_pool=strand_pool)
         print("Orientation fixed in the strand pool")
 
         return self.clustered_seqs
@@ -78,20 +82,20 @@ class Clustering:
             self, n_candidates: int, n_samples: int = 15, clustered_seqs: List[List[str]] = None,
             fix_orientation=True) -> List[str]:
 
-        clustered_seqs = clustered_seqs[:n_candidates]
-
-        if clustered_seqs:
+        if clustered_seqs:  
+            clustered_seqs = clustered_seqs[:n_candidates]
             self.candidates = get_candidates(clustered_seqs=clustered_seqs, n_samples=n_samples)
         else:
-            self.candidates = get_candidates(clustered_seqs=self.clustered_seqs, n_samples=n_samples)
+            clustered_seqs = self.clustered_seqs[:n_candidates]
+            self.candidates = get_candidates(clustered_seqs=clustered_seqs, n_samples=n_samples)
 
         if fix_orientation:
             print("Fixing candidate orientations")
-            reversed_markers = get_candidate_orientation(original_strands=self.original_strands, candidates=candidates)
+            reversed_markers = get_candidate_orientation(original_strands=self.original_strands, candidates=self.candidates)
             n_reversed = sum(reversed_markers)
-            print(f"{n_reversed/len(n_candidates)} candidates are reversed")
+            print(f"{n_reversed/n_candidates} candidates are reversed")
             candidates = [
-                reverse_complement(candidates[ind]) if reversed_markers[ind] else candidates[ind] for ind in range(len(self.candidates))]
+                reverse_complement(self.candidates[ind]) if reversed_markers[ind] else self.candidates[ind] for ind in range(len(self.candidates))]
             self.candidates = candidates
             
         return self.candidates

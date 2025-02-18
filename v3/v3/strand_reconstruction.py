@@ -6,8 +6,9 @@ import os
 from Bio import AlignIO, SeqIO, Align
 import regex as re
 from utils import reverse_complement
-from Leveshtien import ratio
+from Levenshtein import ratio
 from typing import List
+from tqdm import tqdm
 
 
 def align(seqA: str, seqB: str, identity: bool = True) -> any:
@@ -33,7 +34,7 @@ def multiple_alignment_muscle(
         muscle_exe = os.path.join(os.environ['HOME'], 'muscle.exe')
     else:
         # Change the muscle path here
-        muscle_exe = None
+        muscle_exe = r"C:\Users\Parv\Doc\RA\Projects\incomplete_cycles\muscle-windows-v5.2.exe"
         if not muscle_exe:
             print("Please add the muscle path!")
             exit()
@@ -69,7 +70,7 @@ def multiple_alignment_muscle(
 
 def majority_merge(reads: List[str], weight: float = 0.4) -> str:
     
-    assert [len(i) for i in reads == len(reads[0])]
+    assert [len(i) == len(reads[0]) for i in reads]
 
     res = ""
     for i in range(len(reads[0])):
@@ -85,17 +86,20 @@ def majority_merge(reads: List[str], weight: float = 0.4) -> str:
     return res
 
 def make_prediction(cluster: List[str], sample_size: int=5) -> str:
-    assert sample_size <= len(cluster)
+    #assert sample_size <= len(cluster)
     cluster = random.sample(cluster, min(sample_size, len(cluster)))
     return majority_merge(multiple_alignment_muscle(cluster))
 
 def get_clustered_seqs(clusters: List[List[int]], reversed_markers: List[bool], strand_pool: List[str]) -> List[List[str]]:
     assert len(reversed_markers) == len(strand_pool)
     return [
-        [reverse_complement(strand_pool[index]) if reversed_markers[index] else strand_pool(index) for index in cluster] for cluster in clusters]
+        [reverse_complement(strand_pool[index]) if reversed_markers[index] else strand_pool[index] for index in cluster] for cluster in clusters]
 
 def get_candidates(clustered_seqs: List[List[str]], n_samples: int) -> List[str]:
-    return [make_prediction(cluster_seqs, n_samples) for cluster_seqs in clustered_seqs]
+    candidates = []
+    for cluster_seqs in tqdm(clustered_seqs):
+        candidates.append(make_prediction(cluster_seqs, n_samples))
+    return candidates
 
 def get_candidate_orientation(original_strands: List[str], candidates: List[str]) -> List[bool]:
     """Loop through all the candidates, find their best matching reference and reverse the orientation if needbe"""
@@ -106,11 +110,11 @@ def get_candidate_orientation(original_strands: List[str], candidates: List[str]
         rev = reverse_complement(candidate)
 
         if candidate in original_strands:
-            reversed_markers.append(True)
+            reversed_markers.append(False)
             continue
 
         if rev in original_strands:
-            reversed_markers.append(False)
+            reversed_markers.append(True)
             continue
 
         flag = False

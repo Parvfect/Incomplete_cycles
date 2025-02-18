@@ -30,6 +30,7 @@ def remove_adapters_from_strands(strands, original_strand_length, ids=None,
     Removes the start adapters from the strand
     """
 
+    # Add some adapter logging here
     cleaned_strands = []
 
     if ids:

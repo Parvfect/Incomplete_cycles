@@ -1,5 +1,5 @@
 
-from Levenshtein import edittops, ratio, distance
+from Levenshtein import editops, ratio, distance
 from tqdm import tqdm
 from utils import reverse_complement
 import numpy as np
@@ -50,17 +50,19 @@ def evaluate_candidates(original_strands: list[str], candidates: list[str]) -> D
             original_strand_index = original_strands.index(candidate)
             reference_strand_indices[ind] = original_strand_index
             recovery_rates[ind] = 1.0
+            reference_recoveries[original_strand_index] = 1.0
             continue
         
         best_recovery = 0.0
         best_matching_index = 0
-        for ind_, original_strand in original_strands:
+        for ind_, original_strand in enumerate(original_strands):
             recovery = ratio(original_strand, candidate)
 
             if recovery > best_recovery:
                 best_recovery, best_matching_index = recovery, ind_
 
         reference_strand_indices[ind] = best_matching_index
+        reference_recoveries[best_matching_index] = best_recovery
         recovery_rates[ind] = best_recovery
 
     return {

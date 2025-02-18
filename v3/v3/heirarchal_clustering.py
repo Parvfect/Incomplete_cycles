@@ -1,11 +1,11 @@
 
-from Levenshtein import ratio, distance
+from Levenshtein import distance
 from tqdm import tqdm
 from strand_reconstruction import multiple_alignment_muscle, majority_merge
 import random
 import numpy as np
-from utils import get_recovery_percentage, reverse_complement, get_sort_by_sublists_length
-from typing import List, Tuple, Dict
+from utils import reverse_complement
+from typing import List, Dict
 
 
 def get_edit_distance_matrix(strands):
